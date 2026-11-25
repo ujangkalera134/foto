@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FaceGuard AI — Cartoon ONNX & Face Censor (Cloudflare Ready)</title>
+  <title>FaceGuard AI Studio — Cartoon & Face Censor</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.min.js"></script>
   <style>
     .canvas-bg {
       background-color: #f8fafc;
@@ -33,7 +32,7 @@
         </div>
         <div>
           <h1 class="text-lg font-bold tracking-tight text-white">FaceGuard AI Studio</h1>
-          <p class="text-xs text-slate-400">ONNX AnimeGANv2 + Face Censor • 100% Di Perangkat Anda</p>
+          <p class="text-xs text-slate-400">Cartoon Outline + Face Censor • 100% Di Perangkat Anda</p>
         </div>
       </div>
 
@@ -47,7 +46,6 @@
   <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-      <!-- KIRI: Kontrol -->
       <div class="lg:col-span-4 space-y-6 bg-slate-800/60 border border-slate-700/80 p-6 rounded-2xl shadow-xl">
         <div>
           <label class="block text-sm font-semibold text-slate-200 mb-2">1. Pilih Foto</label>
@@ -95,10 +93,10 @@
         <div>
           <div class="flex items-center justify-between mb-3">
             <label class="text-sm font-semibold text-slate-200">3. Gaya & Filter</label>
-            <select id="animeStyleSelect" class="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2 py-1 focus:outline-none focus:border-indigo-500">
-              <option value="hayao">Gaya: Hayao (Anime)</option>
-              <option value="shinkai">Gaya: Shinkai (Ceruk)</option>
-              <option value="paprika">Gaya: Paprika (Bold)</option>
+            <select id="cartoonPresetSelect" class="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2 py-1 focus:outline-none focus:border-indigo-500">
+              <option value="cel">Cel Shade (Halus)</option>
+              <option value="comic">Comic Ink (Garis Tegas)</option>
+              <option value="pastel">Pastel Sketch</option>
             </select>
           </div>
           <div class="grid grid-cols-2 gap-2.5" id="filterButtons">
@@ -106,7 +104,7 @@
               Normal
             </button>
             <button data-filter="cartoon" disabled class="filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-3 rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">
-              AI Cartoon
+              Cartoon
             </button>
             <button data-filter="grayscale" disabled class="filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-3 rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">
               Grayscale
@@ -129,7 +127,6 @@
         </div>
       </div>
 
-      <!-- KANAN: Canvas Preview -->
       <div class="lg:col-span-8 bg-slate-800/40 border border-slate-700/80 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center min-h-[450px] relative shadow-xl">
         <div id="emptyState" class="text-center py-16 px-4">
           <div class="w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center mx-auto mb-4 text-slate-500">
@@ -139,7 +136,7 @@
             </svg>
           </div>
           <h3 class="text-base font-medium text-slate-300">Belum ada gambar yang dimuat</h3>
-          <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">Unggah foto di panel sebelah kiri. Proses AI & sensor berjalan langsung di browser Anda.</p>
+          <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">Unggah foto di panel sebelah kiri. Semua proses berjalan 100% lokal di perangkat Anda.</p>
         </div>
 
         <div id="canvasWrapper" class="hidden w-full flex items-center justify-center rounded-xl overflow-hidden canvas-bg p-2 border border-slate-700">
@@ -180,7 +177,7 @@
       const censorTypeSelect = document.getElementById('censorType');
       const clearCensorBtn = document.getElementById('clearCensorBtn');
       const faceCountBadge = document.getElementById('faceCountBadge');
-      const animeStyleSelect = document.getElementById('animeStyleSelect');
+      const cartoonPresetSelect = document.getElementById('cartoonPresetSelect');
       const filterButtons = document.querySelectorAll('.filter-btn');
       const downloadBtn = document.getElementById('downloadBtn');
 
@@ -189,21 +186,10 @@
       let detectedFaces = [];
       let currentFilter = 'normal';
       let currentCensorType = 'pixelate';
-      let currentAnimeStyle = 'hayao';
-      const onnxSessionCache = {};
-      const cartoonImageCache = {};
+      let currentCartoonPreset = 'cel';
+      const cartoonCache = {};
 
       const FACE_MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-      // Bobot AnimeGANv2 ONNX publik (diunduh sekali ke cache browser, foto tidak pernah dikirim ke luar)
-      const ANIME_MODEL_URLS = {
-        hayao: 'https://huggingface.co/akhaliq/AnimeGANv2/resolve/main/AnimeGANv2_Hayao.onnx',
-        shinkai: 'https://huggingface.co/akhaliq/AnimeGANv2/resolve/main/AnimeGANv2_Shinkai.onnx',
-        paprika: 'https://huggingface.co/akhaliq/AnimeGANv2/resolve/main/AnimeGANv2_Paprika.onnx'
-      };
-
-      if (typeof ort !== 'undefined') {
-        ort.env.wasm.numThreads = navigator.hardwareConcurrency ? Math.min(4, navigator.hardwareConcurrency) : 2;
-      }
 
       async function loadFaceDetector() {
         try {
@@ -247,7 +233,7 @@
           img.onload = async () => {
             originalImage = img;
             detectedFaces = [];
-            Object.keys(cartoonImageCache).forEach(k => delete cartoonImageCache[k]);
+            Object.keys(cartoonCache).forEach(k => delete cartoonCache[k]);
             currentFilter = 'normal';
             updateFilterUI();
             updateFaceBadge();
@@ -273,125 +259,108 @@
         filterButtons.forEach(btn => btn.disabled = false);
       }
 
-      async function getOrCreateSession(style) {
-        if (onnxSessionCache[style]) return onnxSessionCache[style];
-        processingText.textContent = `Mengunduh & memuat model AnimeGANv2 (${style}) ke browser...`;
-        const url = ANIME_MODEL_URLS[style];
-        const session = await ort.InferenceSession.create(url, {
-          executionProviders: ['wasm']
-        });
-        onnxSessionCache[style] = session;
-        return session;
-      }
+      function generateCartoonImage(sourceImg, preset) {
+        const key = `${preset}_${sourceImg.width}x${sourceImg.height}`;
+        if (cartoonCache[key]) return cartoonCache[key];
 
-      // Jalankan AnimeGANv2 ONNX secara lokal di browser sambil menjaga bentuk/komposisi foto
-      async function runAnimeGanOnnx(sourceImg, style) {
-        const cacheKey = `${style}_${sourceImg.width}x${sourceImg.height}`;
-        if (cartoonImageCache[cacheKey]) return cartoonImageCache[cacheKey];
+        const maxDim = 760;
+        const scale = Math.min(1, maxDim / Math.max(sourceImg.width, sourceImg.height));
+        const w = Math.max(1, Math.round(sourceImg.width * scale));
+        const h = Math.max(1, Math.round(sourceImg.height * scale));
 
-        const session = await getOrCreateSession(style);
-        processingText.textContent = 'Mengubah foto menjadi gaya kartun/anime secara lokal...';
+        const workCanvas = document.createElement('canvas');
+        workCanvas.width = w;
+        workCanvas.height = h;
+        const wCtx = workCanvas.getContext('2d', { willReadFrequently: true });
 
-        // Ukuran kelipatan 32 agar aman untuk arsitektur encoder-decoder AnimeGANv2
-        const maxSide = 512;
-        const rawScale = Math.min(1, maxSide / Math.max(sourceImg.width, sourceImg.height));
-        const targetW = Math.max(64, Math.round((sourceImg.width * rawScale) / 32) * 32);
-        const targetH = Math.max(64, Math.round((sourceImg.height * rawScale) / 32) * 32);
+        if (preset === 'pastel') {
+          wCtx.filter = 'saturate(125%) contrast(98%) brightness(106%)';
+        } else if (preset === 'comic') {
+          wCtx.filter = 'saturate(155%) contrast(120%)';
+        } else {
+          wCtx.filter = 'saturate(140%) contrast(110%)';
+        }
+        wCtx.drawImage(sourceImg, 0, 0, w, h);
 
-        const inCanvas = document.createElement('canvas');
-        inCanvas.width = targetW;
-        inCanvas.height = targetH;
-        const inCtx = inCanvas.getContext('2d', { willReadFrequently: true });
-        inCtx.drawImage(sourceImg, 0, 0, targetW, targetH);
-
-        const rgba = inCtx.getImageData(0, 0, targetW, targetH).data;
-        const inputName = session.inputNames[0];
-        const inputMeta = session.inputMetadata?.[inputName];
-        const isNHWC = Array.isArray(inputMeta?.dimensions) && inputMeta.dimensions[3] === 3;
-
-        // Normalisasi ke [-1, 1] sesuai standar AnimeGANv2
-        const floatData = new Float32Array(1 * 3 * targetH * targetW);
-        const planeSize = targetW * targetH;
-
-        for (let y = 0; y < targetH; y++) {
-          for (let x = 0; x < targetW; x++) {
-            const p = y * targetW + x;
-            const i = p * 4;
-            const r = (rgba[i] / 127.5) - 1.0;
-            const g = (rgba[i + 1] / 127.5) - 1.0;
-            const b = (rgba[i + 2] / 127.5) - 1.0;
-
-            if (isNHWC) {
-              const base = p * 3;
-              floatData[base] = r;
-              floatData[base + 1] = g;
-              floatData[base + 2] = b;
-            } else {
-              floatData[p] = r;
-              floatData[planeSize + p] = g;
-              floatData[2 * planeSize + p] = b;
-            }
-          }
+        const src = wCtx.getImageData(0, 0, w, h).data;
+        const lum = new Float32Array(w * h);
+        for (let i = 0, p = 0; i < src.length; i += 4, p++) {
+          lum[p] = 0.299 * src[i] + 0.587 * src[i + 1] + 0.114 * src[i + 2];
         }
 
-        const dims = isNHWC ? [1, targetH, targetW, 3] : [1, 3, targetH, targetW];
-        const tensor = new ort.Tensor('float32', floatData, dims);
-        const results = await session.run({ [inputName]: tensor });
-        const outputTensor = results[session.outputNames[0]];
-        const outData = outputTensor.data;
+        const outImg = wCtx.createImageData(w, h);
+        const dst = outImg.data;
+        const levels = preset === 'comic' ? 6 : 8;
+        const step = 255 / (levels - 1);
+        const edgeThreshold = preset === 'comic' ? 95 : 125;
 
-        const outCanvas = document.createElement('canvas');
-        outCanvas.width = targetW;
-        outCanvas.height = targetH;
-        const outCtx = outCanvas.getContext('2d');
-        const outImgData = outCtx.createImageData(targetW, targetH);
-        const dst = outImgData.data;
+        for (let y = 0; y < h; y++) {
+          const yPrev = Math.max(0, y - 1);
+          const yNext = Math.min(h - 1, y + 1);
+          for (let x = 0; x < w; x++) {
+            const xPrev = Math.max(0, x - 1);
+            const xNext = Math.min(w - 1, x + 1);
+            const idx = (y * w + x) * 4;
 
-        const outNHWC = outputTensor.dims[3] === 3;
-        for (let y = 0; y < targetH; y++) {
-          for (let x = 0; x < targetW; x++) {
-            const p = y * targetW + x;
-            const i = p * 4;
-            let rVal, gVal, bVal;
+            const neighbors = [
+              (yPrev * w + xPrev) * 4, (yPrev * w + x) * 4, (yPrev * w + xNext) * 4,
+              (y * w + xPrev) * 4,     idx,                   (y * w + xNext) * 4,
+              (yNext * w + xPrev) * 4, (yNext * w + x) * 4, (yNext * w + xNext) * 4
+            ];
 
-            if (outNHWC) {
-              const base = p * 3;
-              rVal = outData[base];
-              gVal = outData[base + 1];
-              bVal = outData[base + 2];
-            } else {
-              rVal = outData[p];
-              gVal = outData[planeSize + p];
-              bVal = outData[2 * planeSize + p];
+            let rSum = 0, gSum = 0, bSum = 0, wSum = 0;
+            const cR = src[idx], cG = src[idx + 1], cB = src[idx + 2];
+
+            for (let k = 0; k < 9; k++) {
+              const ni = neighbors[k];
+              const diff = Math.abs(src[ni] - cR) + Math.abs(src[ni + 1] - cG) + Math.abs(src[ni + 2] - cB);
+              const weight = diff < 80 ? (k === 4 ? 2.5 : 1) : 0.15;
+              rSum += src[ni] * weight;
+              gSum += src[ni + 1] * weight;
+              bSum += src[ni + 2] * weight;
+              wSum += weight;
             }
 
-            dst[i] = Math.max(0, Math.min(255, Math.round((rVal + 1.0) * 127.5)));
-            dst[i + 1] = Math.max(0, Math.min(255, Math.round((gVal + 1.0) * 127.5)));
-            dst[i + 2] = Math.max(0, Math.min(255, Math.round((bVal + 1.0) * 127.5)));
-            dst[i + 3] = 255;
+            let r = Math.round(Math.round((rSum / wSum) / step) * step);
+            let g = Math.round(Math.round((gSum / wSum) / step) * step);
+            let b = Math.round(Math.round((bSum / wSum) / step) * step);
+
+            if (x > 0 && x < w - 1 && y > 0 && y < h - 1) {
+              const tl = lum[yPrev * w + xPrev], tc = lum[yPrev * w + x], tr = lum[yPrev * w + xNext];
+              const ml = lum[y * w + xPrev], mr = lum[y * w + xNext];
+              const bl = lum[yNext * w + xPrev], bc = lum[yNext * w + x], br = lum[yNext * w + xNext];
+              const gx = -tl + tr - 2 * ml + 2 * mr - bl + br;
+              const gy = -tl - 2 * tc - tr + bl + 2 * bc + br;
+              const edge = Math.hypot(gx, gy);
+
+              if (edge > edgeThreshold) {
+                const ink = Math.min(1, (edge - edgeThreshold) / 130);
+                r = Math.round(r * (1 - ink * 0.85));
+                g = Math.round(g * (1 - ink * 0.85));
+                b = Math.round(b * (1 - ink * 0.85));
+              }
+            }
+
+            dst[idx] = Math.max(0, Math.min(255, r));
+            dst[idx + 1] = Math.max(0, Math.min(255, g));
+            dst[idx + 2] = Math.max(0, Math.min(255, b));
+            dst[idx + 3] = 255;
           }
         }
-        outCtx.putImageData(outImgData, 0, 0);
+        wCtx.putImageData(outImg, 0, 0);
 
         const fullCanvas = document.createElement('canvas');
         fullCanvas.width = sourceImg.width;
         fullCanvas.height = sourceImg.height;
-        const fullCtx = fullCanvas.getContext('2d');
-        fullCtx.imageSmoothingEnabled = true;
-        fullCtx.imageSmoothingQuality = 'high';
-        fullCtx.drawImage(outCanvas, 0, 0, fullCanvas.width, fullCanvas.height);
+        const fCtx = fullCanvas.getContext('2d');
+        fCtx.imageSmoothingEnabled = true;
+        fCtx.imageSmoothingQuality = 'high';
+        fCtx.drawImage(workCanvas, 0, 0, fullCanvas.width, fullCanvas.height);
 
-        const resultImg = new Image();
-        await new Promise((resolve) => {
-          resultImg.onload = resolve;
-          resultImg.src = fullCanvas.toDataURL('image/png');
-        });
-
-        cartoonImageCache[cacheKey] = resultImg;
-        return resultImg;
+        cartoonCache[key] = fullCanvas;
+        return fullCanvas;
       }
 
-      // Urutan Render: Gambar Asli / AI Cartoon -> Filter Seluruh Gambar -> Sensor Wajah di Atasnya
       async function renderCanvas() {
         if (!originalImage) return;
 
@@ -401,18 +370,11 @@
 
         let baseSource = originalImage;
         if (currentFilter === 'cartoon') {
+          processingText.textContent = 'Menerapkan efek kartun secara lokal...';
           processingOverlay.classList.remove('hidden');
-          try {
-            baseSource = await runAnimeGanOnnx(originalImage, currentAnimeStyle);
-          } catch (err) {
-            console.error('ONNX error:', err);
-            alert('Gagal menjalankan model ONNX di browser. Periksa koneksi untuk mengunduh bobot model atau coba gaya lain.');
-            currentFilter = 'normal';
-            updateFilterUI();
-            baseSource = originalImage;
-          } finally {
-            processingOverlay.classList.add('hidden');
-          }
+          await new Promise(r => setTimeout(r, 15));
+          baseSource = generateCartoonImage(originalImage, currentCartoonPreset);
+          processingOverlay.classList.add('hidden');
         }
 
         ctx.save();
@@ -525,8 +487,8 @@
         await renderCanvas();
       });
 
-      animeStyleSelect.addEventListener('change', async (e) => {
-        currentAnimeStyle = e.target.value;
+      cartoonPresetSelect.addEventListener('change', async (e) => {
+        currentCartoonPreset = e.target.value;
         if (currentFilter === 'cartoon' && originalImage) {
           await renderCanvas();
         }
