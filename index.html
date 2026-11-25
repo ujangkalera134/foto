@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Image Editor & Face Censor (100% Client-Side)</title>
-  <!-- Tailwind CSS via CDN -->
+  <title>FaceGuard AI — Cartoon ONNX & Face Censor (Cloudflare Ready)</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- face-api.js via CDN -->
   <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.min.js"></script>
   <style>
-    /* Custom scrollbar & checkered background for transparent/empty canvas */
     .canvas-bg {
       background-color: #f8fafc;
       background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
@@ -24,9 +22,8 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
 
-  <!-- Header -->
   <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center space-x-3">
         <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,27 +32,23 @@
           </svg>
         </div>
         <div>
-          <h1 class="text-lg font-bold tracking-tight text-white">FaceGuard Studio</h1>
-          <p class="text-xs text-slate-400">Client-Side Image Editor & AI Face Censor</p>
+          <h1 class="text-lg font-bold tracking-tight text-white">FaceGuard AI Studio</h1>
+          <p class="text-xs text-slate-400">ONNX AnimeGANv2 + Face Censor • 100% Di Perangkat Anda</p>
         </div>
       </div>
 
-      <!-- Status Model AI -->
       <div id="modelStatus" class="flex items-center space-x-2 text-xs font-medium px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
         <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-        <span>Memuat Model AI...</span>
+        <span>Memuat Detektor Wajah...</span>
       </div>
     </div>
   </header>
 
-  <!-- Main Content -->
   <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-      <!-- KIRI: Panel Kontrol -->
+      <!-- KIRI: Kontrol -->
       <div class="lg:col-span-4 space-y-6 bg-slate-800/60 border border-slate-700/80 p-6 rounded-2xl shadow-xl">
-        
-        <!-- 1. Upload Gambar -->
         <div>
           <label class="block text-sm font-semibold text-slate-200 mb-2">1. Pilih Foto</label>
           <div id="dropZone" class="border-2 border-dashed border-slate-600 hover:border-indigo-500 transition-colors rounded-xl p-6 text-center cursor-pointer bg-slate-800/40 group">
@@ -64,32 +57,30 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <p class="text-sm text-slate-300 font-medium">Klik untuk unggah atau Drag & Drop</p>
-            <p class="text-xs text-slate-500 mt-1">JPG, PNG, WEBP (Maks. resolusi browser)</p>
+            <p class="text-xs text-slate-500 mt-1">JPG, PNG, WEBP (Foto tidak diupload ke server)</p>
           </div>
         </div>
 
         <hr class="border-slate-700/80" />
 
-        <!-- 2. Deteksi & Sensor Wajah -->
         <div>
           <div class="flex items-center justify-between mb-2">
-            <label class="text-sm font-semibold text-slate-200">2. Privasi & Sensor Wajah</label>
+            <label class="text-sm font-semibold text-slate-200">2. Deteksi & Sensor Wajah</label>
             <span id="faceCountBadge" class="hidden text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-md border border-indigo-500/30">0 Wajah</span>
           </div>
-          
+
           <div class="space-y-3">
             <button id="detectBtn" disabled class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-medium rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center space-x-2">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
-              <span id="detectBtnText">Deteksi & Sensor Wajah</span>
+              <span>Deteksi & Sensor Wajah</span>
             </button>
 
-            <!-- Opsi Tipe Sensor & Reset -->
             <div class="grid grid-cols-2 gap-2">
               <select id="censorType" disabled class="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 disabled:opacity-50">
-                <option value="pixelate">Mode: Pixelate (Mosaik)</option>
-                <option value="blur">Mode: Gaussian Blur</option>
+                <option value="pixelate">Mode: Pixelate</option>
+                <option value="blur">Mode: Blur</option>
                 <option value="blackbox">Mode: Kotak Hitam</option>
               </select>
               <button id="clearCensorBtn" disabled class="bg-slate-700/70 hover:bg-slate-700 disabled:opacity-50 text-slate-300 text-xs font-medium rounded-lg px-3 py-2 transition-colors">
@@ -101,15 +92,21 @@
 
         <hr class="border-slate-700/80" />
 
-        <!-- 3. Filter Foto -->
         <div>
-          <label class="block text-sm font-semibold text-slate-200 mb-3">3. Filter Warna & Gaya</label>
+          <div class="flex items-center justify-between mb-3">
+            <label class="text-sm font-semibold text-slate-200">3. Gaya & Filter</label>
+            <select id="animeStyleSelect" class="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2 py-1 focus:outline-none focus:border-indigo-500">
+              <option value="hayao">Gaya: Hayao (Anime)</option>
+              <option value="shinkai">Gaya: Shinkai (Ceruk)</option>
+              <option value="paprika">Gaya: Paprika (Bold)</option>
+            </select>
+          </div>
           <div class="grid grid-cols-2 gap-2.5" id="filterButtons">
             <button data-filter="normal" disabled class="filter-btn active ring-2 ring-indigo-500 bg-slate-700 text-white py-2 px-3 rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">
               Normal
             </button>
             <button data-filter="cartoon" disabled class="filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-3 rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">
-              Cartoon
+              AI Cartoon
             </button>
             <button data-filter="grayscale" disabled class="filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-3 rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">
               Grayscale
@@ -122,7 +119,6 @@
 
         <hr class="border-slate-700/80" />
 
-        <!-- 4. Download -->
         <div>
           <button id="downloadBtn" disabled class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center space-x-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,13 +127,10 @@
             <span>Download Hasil (PNG)</span>
           </button>
         </div>
-
       </div>
 
-      <!-- KANAN: Preview Canvas -->
+      <!-- KANAN: Canvas Preview -->
       <div class="lg:col-span-8 bg-slate-800/40 border border-slate-700/80 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center min-h-[450px] relative shadow-xl">
-        
-        <!-- Placeholder saat belum ada gambar -->
         <div id="emptyState" class="text-center py-16 px-4">
           <div class="w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center mx-auto mb-4 text-slate-500">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,25 +139,22 @@
             </svg>
           </div>
           <h3 class="text-base font-medium text-slate-300">Belum ada gambar yang dimuat</h3>
-          <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">Unggah foto di panel sebelah kiri untuk mulai menyensor wajah atau menambahkan filter.</p>
+          <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">Unggah foto di panel sebelah kiri. Proses AI & sensor berjalan langsung di browser Anda.</p>
         </div>
 
-        <!-- Container Canvas -->
         <div id="canvasWrapper" class="hidden w-full flex items-center justify-center rounded-xl overflow-hidden canvas-bg p-2 border border-slate-700">
           <canvas id="editorCanvas" class="rounded-lg shadow-2xl"></canvas>
         </div>
 
-        <!-- Loading Overlay saat deteksi AI berjalan -->
-        <div id="processingOverlay" class="hidden absolute inset-0 bg-slate-900/75 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-20">
+        <div id="processingOverlay" class="hidden absolute inset-0 bg-slate-900/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-20 px-4 text-center">
           <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-          <p class="text-sm font-medium text-white">Mendeteksi wajah secara lokal...</p>
+          <p id="processingText" class="text-sm font-medium text-white">Memproses secara lokal...</p>
+          <p class="text-xs text-slate-400 mt-1">Foto tidak dikirim ke server mana pun.</p>
         </div>
-
       </div>
     </div>
   </main>
 
-  <!-- Footer Privasi -->
   <footer class="border-t border-slate-800/80 py-5 px-4 text-center bg-slate-900/50">
     <p class="text-xs text-slate-400 flex items-center justify-center gap-1.5">
       <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,10 +164,8 @@
     </p>
   </footer>
 
-  <!-- Vanilla JavaScript Application Logic -->
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      // Elemen DOM
+    document.addEventListener('DOMContentLoaded', () => {
       const dropZone = document.getElementById('dropZone');
       const imageInput = document.getElementById('imageInput');
       const editorCanvas = document.getElementById('editorCanvas');
@@ -185,73 +173,67 @@
       const emptyState = document.getElementById('emptyState');
       const canvasWrapper = document.getElementById('canvasWrapper');
       const processingOverlay = document.getElementById('processingOverlay');
-      
+      const processingText = document.getElementById('processingText');
+
       const modelStatus = document.getElementById('modelStatus');
       const detectBtn = document.getElementById('detectBtn');
-      const detectBtnText = document.getElementById('detectBtnText');
       const censorTypeSelect = document.getElementById('censorType');
       const clearCensorBtn = document.getElementById('clearCensorBtn');
       const faceCountBadge = document.getElementById('faceCountBadge');
+      const animeStyleSelect = document.getElementById('animeStyleSelect');
       const filterButtons = document.querySelectorAll('.filter-btn');
       const downloadBtn = document.getElementById('downloadBtn');
 
-      // State Aplikasi
-      let isModelLoaded = false;
-      let originalImage = null;       // Menyimpan objek HTMLImageElement asli
-      let detectedFaces = [];         // Menyimpan koordinat bounding box wajah [{x, y, width, height}]
-      let currentFilter = 'normal';   // 'normal' | 'cartoon' | 'grayscale' | 'vintage'
-      let currentCensorType = 'pixelate'; // 'pixelate' | 'blur' | 'blackbox'
+      let isFaceModelLoaded = false;
+      let originalImage = null;
+      let detectedFaces = [];
+      let currentFilter = 'normal';
+      let currentCensorType = 'pixelate';
+      let currentAnimeStyle = 'hayao';
+      const onnxSessionCache = {};
+      const cartoonImageCache = {};
 
-      // URL Model Publik TinyFaceDetector
-      const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+      const FACE_MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+      // Bobot AnimeGANv2 ONNX publik (diunduh sekali ke cache browser, foto tidak pernah dikirim ke luar)
+      const ANIME_MODEL_URLS = {
+        hayao: 'https://huggingface.co/akhaliq/AnimeGANv2/resolve/main/AnimeGANv2_Hayao.onnx',
+        shinkai: 'https://huggingface.co/akhaliq/AnimeGANv2/resolve/main/AnimeGANv2_Shinkai.onnx',
+        paprika: 'https://huggingface.co/akhaliq/AnimeGANv2/resolve/main/AnimeGANv2_Paprika.onnx'
+      };
 
-      // 1. Load Model face-api.js secara Asynchronous
-      async function loadAIModels() {
+      if (typeof ort !== 'undefined') {
+        ort.env.wasm.numThreads = navigator.hardwareConcurrency ? Math.min(4, navigator.hardwareConcurrency) : 2;
+      }
+
+      async function loadFaceDetector() {
         try {
-          // Tunggu hingga library faceapi siap dari script defer
           while (typeof faceapi === 'undefined') {
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(r => setTimeout(r, 100));
           }
-          await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-          isModelLoaded = true;
-          
+          await faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URL);
+          isFaceModelLoaded = true;
           modelStatus.className = 'flex items-center space-x-2 text-xs font-medium px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-          modelStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>Model AI Siap</span>`;
-          
+          modelStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>Detektor Wajah Siap</span>`;
           if (originalImage) detectBtn.disabled = false;
-        } catch (error) {
-          console.error('Gagal memuat model face-api.js:', error);
+        } catch (err) {
+          console.error(err);
           modelStatus.className = 'flex items-center space-x-2 text-xs font-medium px-3 py-1.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20';
-          modelStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400"></span><span>Gagal Memuat AI (Cek Koneksi)</span>`;
+          modelStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400"></span><span>Gagal Memuat Model Wajah</span>`;
         }
       }
 
-      loadAIModels();
+      loadFaceDetector();
 
-      // 2. Penanganan Upload & Drag-and-Drop
       dropZone.addEventListener('click', () => imageInput.click());
-
-      dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('border-indigo-500', 'bg-slate-800');
-      });
-
-      dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('border-indigo-500', 'bg-slate-800');
-      });
-
+      dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-indigo-500', 'bg-slate-800'); });
+      dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-indigo-500', 'bg-slate-800'); });
       dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropZone.classList.remove('border-indigo-500', 'bg-slate-800');
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-          handleImageFile(e.dataTransfer.files[0]);
-        }
+        if (e.dataTransfer.files?.[0]) handleImageFile(e.dataTransfer.files[0]);
       });
-
       imageInput.addEventListener('change', (e) => {
-        if (e.target.files && e.target.files[0]) {
-          handleImageFile(e.target.files[0]);
-        }
+        if (e.target.files?.[0]) handleImageFile(e.target.files[0]);
       });
 
       function handleImageFile(file) {
@@ -259,109 +241,206 @@
           alert('Harap pilih file gambar yang valid (JPG, PNG, WEBP).');
           return;
         }
-
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = (ev) => {
           const img = new Image();
-          img.onload = () => {
+          img.onload = async () => {
             originalImage = img;
-            detectedFaces = []; // Reset deteksi wajah saat gambar baru dimuat
+            detectedFaces = [];
+            Object.keys(cartoonImageCache).forEach(k => delete cartoonImageCache[k]);
             currentFilter = 'normal';
             updateFilterUI();
             updateFaceBadge();
 
-            // Set dimensi asli canvas sesuai gambar agar resolusi tetap tajam
             editorCanvas.width = img.width;
             editorCanvas.height = img.height;
 
-            // Tampilkan canvas & aktifkan tombol kontrol
             emptyState.classList.add('hidden');
             canvasWrapper.classList.remove('hidden');
             enableControls();
-
-            // Render pertama kali
-            renderCanvas();
+            await renderCanvas();
           };
-          img.src = event.target.result;
+          img.src = ev.target.result;
         };
         reader.readAsDataURL(file);
       }
 
       function enableControls() {
-        if (isModelLoaded) detectBtn.disabled = false;
+        if (isFaceModelLoaded) detectBtn.disabled = false;
         censorTypeSelect.disabled = false;
         clearCensorBtn.disabled = false;
         downloadBtn.disabled = false;
         filterButtons.forEach(btn => btn.disabled = false);
       }
 
-      // 3. Logika Utama Render Pipeline (Urutan Ketat: Gambar Asli -> Filter -> Sensor Wajah)
-      function renderCanvas() {
+      async function getOrCreateSession(style) {
+        if (onnxSessionCache[style]) return onnxSessionCache[style];
+        processingText.textContent = `Mengunduh & memuat model AnimeGANv2 (${style}) ke browser...`;
+        const url = ANIME_MODEL_URLS[style];
+        const session = await ort.InferenceSession.create(url, {
+          executionProviders: ['wasm']
+        });
+        onnxSessionCache[style] = session;
+        return session;
+      }
+
+      // Jalankan AnimeGANv2 ONNX secara lokal di browser sambil menjaga bentuk/komposisi foto
+      async function runAnimeGanOnnx(sourceImg, style) {
+        const cacheKey = `${style}_${sourceImg.width}x${sourceImg.height}`;
+        if (cartoonImageCache[cacheKey]) return cartoonImageCache[cacheKey];
+
+        const session = await getOrCreateSession(style);
+        processingText.textContent = 'Mengubah foto menjadi gaya kartun/anime secara lokal...';
+
+        // Ukuran kelipatan 32 agar aman untuk arsitektur encoder-decoder AnimeGANv2
+        const maxSide = 512;
+        const rawScale = Math.min(1, maxSide / Math.max(sourceImg.width, sourceImg.height));
+        const targetW = Math.max(64, Math.round((sourceImg.width * rawScale) / 32) * 32);
+        const targetH = Math.max(64, Math.round((sourceImg.height * rawScale) / 32) * 32);
+
+        const inCanvas = document.createElement('canvas');
+        inCanvas.width = targetW;
+        inCanvas.height = targetH;
+        const inCtx = inCanvas.getContext('2d', { willReadFrequently: true });
+        inCtx.drawImage(sourceImg, 0, 0, targetW, targetH);
+
+        const rgba = inCtx.getImageData(0, 0, targetW, targetH).data;
+        const inputName = session.inputNames[0];
+        const inputMeta = session.inputMetadata?.[inputName];
+        const isNHWC = Array.isArray(inputMeta?.dimensions) && inputMeta.dimensions[3] === 3;
+
+        // Normalisasi ke [-1, 1] sesuai standar AnimeGANv2
+        const floatData = new Float32Array(1 * 3 * targetH * targetW);
+        const planeSize = targetW * targetH;
+
+        for (let y = 0; y < targetH; y++) {
+          for (let x = 0; x < targetW; x++) {
+            const p = y * targetW + x;
+            const i = p * 4;
+            const r = (rgba[i] / 127.5) - 1.0;
+            const g = (rgba[i + 1] / 127.5) - 1.0;
+            const b = (rgba[i + 2] / 127.5) - 1.0;
+
+            if (isNHWC) {
+              const base = p * 3;
+              floatData[base] = r;
+              floatData[base + 1] = g;
+              floatData[base + 2] = b;
+            } else {
+              floatData[p] = r;
+              floatData[planeSize + p] = g;
+              floatData[2 * planeSize + p] = b;
+            }
+          }
+        }
+
+        const dims = isNHWC ? [1, targetH, targetW, 3] : [1, 3, targetH, targetW];
+        const tensor = new ort.Tensor('float32', floatData, dims);
+        const results = await session.run({ [inputName]: tensor });
+        const outputTensor = results[session.outputNames[0]];
+        const outData = outputTensor.data;
+
+        const outCanvas = document.createElement('canvas');
+        outCanvas.width = targetW;
+        outCanvas.height = targetH;
+        const outCtx = outCanvas.getContext('2d');
+        const outImgData = outCtx.createImageData(targetW, targetH);
+        const dst = outImgData.data;
+
+        const outNHWC = outputTensor.dims[3] === 3;
+        for (let y = 0; y < targetH; y++) {
+          for (let x = 0; x < targetW; x++) {
+            const p = y * targetW + x;
+            const i = p * 4;
+            let rVal, gVal, bVal;
+
+            if (outNHWC) {
+              const base = p * 3;
+              rVal = outData[base];
+              gVal = outData[base + 1];
+              bVal = outData[base + 2];
+            } else {
+              rVal = outData[p];
+              gVal = outData[planeSize + p];
+              bVal = outData[2 * planeSize + p];
+            }
+
+            dst[i] = Math.max(0, Math.min(255, Math.round((rVal + 1.0) * 127.5)));
+            dst[i + 1] = Math.max(0, Math.min(255, Math.round((gVal + 1.0) * 127.5)));
+            dst[i + 2] = Math.max(0, Math.min(255, Math.round((bVal + 1.0) * 127.5)));
+            dst[i + 3] = 255;
+          }
+        }
+        outCtx.putImageData(outImgData, 0, 0);
+
+        const fullCanvas = document.createElement('canvas');
+        fullCanvas.width = sourceImg.width;
+        fullCanvas.height = sourceImg.height;
+        const fullCtx = fullCanvas.getContext('2d');
+        fullCtx.imageSmoothingEnabled = true;
+        fullCtx.imageSmoothingQuality = 'high';
+        fullCtx.drawImage(outCanvas, 0, 0, fullCanvas.width, fullCanvas.height);
+
+        const resultImg = new Image();
+        await new Promise((resolve) => {
+          resultImg.onload = resolve;
+          resultImg.src = fullCanvas.toDataURL('image/png');
+        });
+
+        cartoonImageCache[cacheKey] = resultImg;
+        return resultImg;
+      }
+
+      // Urutan Render: Gambar Asli / AI Cartoon -> Filter Seluruh Gambar -> Sensor Wajah di Atasnya
+      async function renderCanvas() {
         if (!originalImage) return;
 
         const width = editorCanvas.width;
         const height = editorCanvas.height;
-
-        // Bersihkan canvas
         ctx.clearRect(0, 0, width, height);
 
-        // TAHAP A: Gambar Asli + Filter CSS Canvas
+        let baseSource = originalImage;
+        if (currentFilter === 'cartoon') {
+          processingOverlay.classList.remove('hidden');
+          try {
+            baseSource = await runAnimeGanOnnx(originalImage, currentAnimeStyle);
+          } catch (err) {
+            console.error('ONNX error:', err);
+            alert('Gagal menjalankan model ONNX di browser. Periksa koneksi untuk mengunduh bobot model atau coba gaya lain.');
+            currentFilter = 'normal';
+            updateFilterUI();
+            baseSource = originalImage;
+          } finally {
+            processingOverlay.classList.add('hidden');
+          }
+        }
+
         ctx.save();
         if (currentFilter === 'grayscale') {
           ctx.filter = 'grayscale(100%) contrast(110%)';
         } else if (currentFilter === 'vintage') {
           ctx.filter = 'sepia(75%) contrast(110%) brightness(95%) saturate(120%)';
-        } else if (currentFilter === 'cartoon') {
-          // Kombinasi saturasi & kontras tinggi sebelum manipulasi posterize pixel
-          ctx.filter = 'saturate(180%) contrast(140%)';
         } else {
           ctx.filter = 'none';
         }
-
-        ctx.drawImage(originalImage, 0, 0, width, height);
+        ctx.drawImage(baseSource, 0, 0, width, height);
         ctx.restore();
 
-        // TAHAP B: Manipulasi Pixel Khusus untuk Efek "Cartoon" (Posterization)
-        if (currentFilter === 'cartoon') {
-          applyCartoonPixelEffect(width, height);
-        }
-
-        // TAHAP C: Gambar Ulang Sensor di Atas Wajah (Selalu dijalankan paling akhir agar tidak tembus filter)
         if (detectedFaces.length > 0) {
           applyFaceCensors();
         }
       }
 
-      // Efek Posterize sederhana untuk memperkuat kesan Kartun
-      function applyCartoonPixelEffect(width, height) {
-        const imgData = ctx.getImageData(0, 0, width, height);
-        const data = imgData.data;
-        const levels = 5; // Jumlah gradasi warna per channel
-        const step = 255 / (levels - 1);
-
-        for (let i = 0; i < data.length; i += 4) {
-          data[i]     = Math.round(Math.round(data[i] / step) * step);     // Red
-          data[i + 1] = Math.round(Math.round(data[i + 1] / step) * step); // Green
-          data[i + 2] = Math.round(Math.round(data[i + 2] / step) * step); // Blue
-        }
-        ctx.putImageData(imgData, 0, 0);
-      }
-
-      // 4. Deteksi Wajah menggunakan face-api.js
       detectBtn.addEventListener('click', async () => {
-        if (!originalImage || !isModelLoaded) return;
-
+        if (!originalImage || !isFaceModelLoaded) return;
+        processingText.textContent = 'Mendeteksi wajah secara lokal...';
         processingOverlay.classList.remove('hidden');
         detectBtn.disabled = true;
 
         try {
-          // Gunakan TinyFaceDetectorOptions (inputSize 416 memberikan keseimbangan akurasi & kecepatan)
           const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.4 });
-          
-          // Deteksi langsung dari elemen gambar asli agar tidak terganggu filter canvas
           const detections = await faceapi.detectAllFaces(originalImage, options);
 
-          // Simpan koordinat wajah dengan sedikit padding (10%) agar seluruh area wajah tertutup rapat
           detectedFaces = detections.map(det => {
             const box = det.box;
             const padX = box.width * 0.1;
@@ -375,21 +454,20 @@
           });
 
           updateFaceBadge();
-          renderCanvas();
+          await renderCanvas();
 
           if (detectedFaces.length === 0) {
             alert('Tidak ada wajah yang terdeteksi pada foto ini.');
           }
         } catch (err) {
-          console.error('Error saat deteksi wajah:', err);
-          alert('Terjadi kesalahan saat memproses deteksi wajah.');
+          console.error(err);
+          alert('Terjadi kesalahan saat mendeteksi wajah.');
         } finally {
           processingOverlay.classList.add('hidden');
           detectBtn.disabled = false;
         }
       });
 
-      // Fungsi menggambar efek sensor pada setiap koordinat wajah
       function applyFaceCensors() {
         detectedFaces.forEach(face => {
           const { x, y, width, height } = face;
@@ -399,37 +477,26 @@
             ctx.fillStyle = '#0f172a';
             ctx.fillRect(x, y, width, height);
             ctx.restore();
-
           } else if (currentCensorType === 'blur') {
-            // Gunakan offscreen canvas kecil untuk efek blur yang cepat & rapi
             ctx.save();
             ctx.beginPath();
             ctx.rect(x, y, width, height);
             ctx.clip();
-            
-            // Tingkat blur dinamis berdasarkan ukuran wajah
+
             const blurRadius = Math.max(12, Math.floor(width / 8));
             ctx.filter = `blur(${blurRadius}px)`;
-            // Gambar ulang area wajah dari canvas saat ini dengan filter blur
             ctx.drawImage(editorCanvas, x - blurRadius, y - blurRadius, width + blurRadius * 2, height + blurRadius * 2, x - blurRadius, y - blurRadius, width + blurRadius * 2, height + blurRadius * 2);
             ctx.restore();
-
-          } else if (currentCensorType === 'pixelate') {
-            // Efek Mosaik / Pixelate dengan downscaling & upscaling tanpa smoothing
+          } else {
             const pixelBlockSize = Math.max(8, Math.floor(width / 10));
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d');
-
             const smallW = Math.max(1, Math.floor(width / pixelBlockSize));
             const smallH = Math.max(1, Math.floor(height / pixelBlockSize));
-
             tempCanvas.width = smallW;
             tempCanvas.height = smallH;
-
-            // Kecilkan potongan wajah ke canvas sementara
             tempCtx.drawImage(editorCanvas, x, y, width, height, 0, 0, smallW, smallH);
 
-            // Matikan image smoothing lalu gambar kembali ke ukuran semula
             ctx.save();
             ctx.imageSmoothingEnabled = false;
             ctx.drawImage(tempCanvas, 0, 0, smallW, smallH, x, y, width, height);
@@ -438,7 +505,6 @@
         });
       }
 
-      // Update UI Badge jumlah wajah
       function updateFaceBadge() {
         if (detectedFaces.length > 0) {
           faceCountBadge.textContent = `${detectedFaces.length} Wajah Disensor`;
@@ -448,24 +514,29 @@
         }
       }
 
-      // Event Listener untuk Tipe Sensor & Tombol Hapus Sensor
-      censorTypeSelect.addEventListener('change', (e) => {
+      censorTypeSelect.addEventListener('change', async (e) => {
         currentCensorType = e.target.value;
-        if (detectedFaces.length > 0) renderCanvas();
+        if (detectedFaces.length > 0) await renderCanvas();
       });
 
-      clearCensorBtn.addEventListener('click', () => {
+      clearCensorBtn.addEventListener('click', async () => {
         detectedFaces = [];
         updateFaceBadge();
-        renderCanvas();
+        await renderCanvas();
       });
 
-      // 5. Event Listener untuk Tombol Filter
+      animeStyleSelect.addEventListener('change', async (e) => {
+        currentAnimeStyle = e.target.value;
+        if (currentFilter === 'cartoon' && originalImage) {
+          await renderCanvas();
+        }
+      });
+
       filterButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
           currentFilter = btn.getAttribute('data-filter');
           updateFilterUI();
-          renderCanvas();
+          await renderCanvas();
         });
       });
 
@@ -482,12 +553,11 @@
         });
       }
 
-      // 6. Download Hasil sebagai PNG
       downloadBtn.addEventListener('click', () => {
         if (!originalImage) return;
         const link = document.createElement('a');
         const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-        link.download = `edited-censored-${timestamp}.png`;
+        link.download = `faceguard-${currentFilter}-${timestamp}.png`;
         link.href = editorCanvas.toDataURL('image/png');
         link.click();
       });
@@ -495,4 +565,3 @@
   </script>
 </body>
 </html>
-
