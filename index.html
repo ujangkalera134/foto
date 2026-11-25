@@ -21,7 +21,6 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
 
-  <!-- Header -->
   <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center space-x-3">
@@ -53,7 +52,6 @@
 
   <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
 
-    <!-- ==================== PANEL MODE FOTO ==================== -->
     <div id="photoSection" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       <div class="lg:col-span-4 space-y-6 bg-slate-800/60 border border-slate-700/80 p-6 rounded-2xl shadow-xl">
         <div>
@@ -151,7 +149,6 @@
       </div>
     </div>
 
-    <!-- ==================== PANEL MODE VIDEO ==================== -->
     <div id="videoSection" class="hidden grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       <div class="lg:col-span-4 space-y-5 bg-slate-800/60 border border-slate-700/80 p-6 rounded-2xl shadow-xl">
         <div>
@@ -267,7 +264,6 @@
     document.addEventListener('DOMContentLoaded', () => {
       const WATERMARK_BRAND = 'vidzey.my.id';
 
-      // Tab Switching
       const tabPhotoBtn = document.getElementById('tabPhotoBtn');
       const tabVideoBtn = document.getElementById('tabVideoBtn');
       const photoSection = document.getElementById('photoSection');
@@ -298,40 +294,31 @@
       tabPhotoBtn.addEventListener('click', () => switchTab('photo'));
       tabVideoBtn.addEventListener('click', () => switchTab('video'));
 
-      // Watermark diagonal
       function drawDiagonalWatermark(targetCtx, width, height) {
         targetCtx.save();
-
         const fontSize = Math.max(18, Math.round(Math.min(width, height) * 0.045));
         targetCtx.font = `800 ${fontSize}px sans-serif`;
         targetCtx.textAlign = 'center';
         targetCtx.textBaseline = 'middle';
-
         const textWidth = targetCtx.measureText(WATERMARK_BRAND).width;
         const stepX = Math.max(220, Math.round(textWidth + fontSize * 3.2));
         const stepY = Math.max(120, Math.round(fontSize * 3.6));
-
         targetCtx.translate(width / 2, height / 2);
         targetCtx.rotate((-28 * Math.PI) / 180);
-
         const diagonalRadius = Math.hypot(width, height) * 0.75;
-
         for (let y = -diagonalRadius; y <= diagonalRadius; y += stepY) {
           for (let x = -diagonalRadius; x <= diagonalRadius; x += stepX) {
             targetCtx.globalAlpha = 0.28;
             targetCtx.fillStyle = '#0f172a';
             targetCtx.fillText(WATERMARK_BRAND, x + 2, y + 2);
-
             targetCtx.globalAlpha = 0.42;
             targetCtx.fillStyle = '#ffffff';
             targetCtx.fillText(WATERMARK_BRAND, x, y);
           }
         }
-
         targetCtx.restore();
       }
 
-      // Load Model
       const FACE_MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
       let isPhotoLoaded = false;
       let isVideoLoaded = false;
@@ -355,7 +342,7 @@
       }
       loadFaceDetector();
 
-      // ==================== LOGIKA MODE FOTO ====================
+      // ==================== MODE FOTO (tidak diubah) ====================
       const photoDropZone = document.getElementById('photoDropZone');
       const photoInput = document.getElementById('photoInput');
       const editorCanvas = document.getElementById('editorCanvas');
@@ -684,15 +671,12 @@
 
       photoDownloadBtn.addEventListener('click', () => {
         if (!originalImage) return;
-
         const exportCanvas = document.createElement('canvas');
         exportCanvas.width = editorCanvas.width;
         exportCanvas.height = editorCanvas.height;
         const eCtx = exportCanvas.getContext('2d');
-
         eCtx.drawImage(editorCanvas, 0, 0);
         drawDiagonalWatermark(eCtx, exportCanvas.width, exportCanvas.height);
-
         const link = document.createElement('a');
         const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
         link.download = `vidzey-${currentPhotoFilter}-${timestamp}.png`;
@@ -700,7 +684,7 @@
         link.click();
       });
 
-      // ==================== LOGIKA MODE VIDEO ====================
+      // ==================== MODE VIDEO ====================
       const videoDropZone = document.getElementById('videoDropZone');
       const videoInput = document.getElementById('videoInput');
       const sourceVideo = document.getElementById('sourceVideo');
@@ -725,6 +709,10 @@
       let mediaRecorder = null;
       let recordedChunks = [];
       let videoAnimFrameId = null;
+
+      // === PERBAIKAN #1: Throttle deteksi (max ~12 fps) ===
+      let lastDetectTime = 0;
+      const DETECT_MIN_INTERVAL = 80; // ms
 
       videoDropZone.addEventListener('click', () => videoInput.click());
       videoDropZone.addEventListener('dragover', (e) => { e.preventDefault(); videoDropZone.classList.add('border-indigo-500', 'bg-slate-800'); });
@@ -751,12 +739,12 @@
         sourceVideo.onloadedmetadata = () => {
           const maxDim = 720;
           const scale = Math.min(1, maxDim / Math.max(sourceVideo.videoWidth, sourceVideo.videoHeight));
-          // dimensi wajib genap untuk encoder H.264
           videoCanvas.width = Math.round(sourceVideo.videoWidth * scale) & ~1;
           videoCanvas.height = Math.round(sourceVideo.videoHeight * scale) & ~1;
 
           isVideoLoaded = true;
           lastVideoBoxes = [];
+          lastDetectTime = 0;
           videoDownloadLink.classList.add('hidden');
 
           videoEmptyState.classList.add('hidden');
@@ -768,14 +756,21 @@
         };
 
         sourceVideo.onseeked = async () => {
-          await detectFacesOnVideoFrame();
-          drawVideoFrame(false);
+          try {
+            await detectFacesOnVideoFrame();
+            drawVideoFrame(false);
+          } catch (e) { console.warn('onseeked error:', e); }
         };
       }
 
       async function detectFacesOnVideoFrame() {
         if (!isFaceModelLoaded || !enableVideoCensor.checked || isDetectingVideo) return;
         if (sourceVideo.readyState < 2) return;
+
+        // === PERBAIKAN #1: throttle ===
+        const now = performance.now();
+        if (now - lastDetectTime < DETECT_MIN_INTERVAL) return;
+        lastDetectTime = now;
 
         isDetectingVideo = true;
         try {
@@ -785,6 +780,9 @@
 
           const scaleX = videoCanvas.width / sourceVideo.videoWidth;
           const scaleY = videoCanvas.height / sourceVideo.videoHeight;
+          if (!Number.isFinite(scaleX) || !Number.isFinite(scaleY) || scaleX <= 0 || scaleY <= 0) {
+            return;
+          }
 
           lastVideoBoxes = detections.map(det => {
             const b = det.box;
@@ -796,11 +794,15 @@
               width: Math.min(videoCanvas.width, (b.width + padX * 2) * scaleX),
               height: Math.min(videoCanvas.height, (b.height + padY * 2) * scaleY)
             };
-          });
+          }).filter(box =>
+            Number.isFinite(box.x) && Number.isFinite(box.y) &&
+            Number.isFinite(box.width) && Number.isFinite(box.height) &&
+            box.width > 2 && box.height > 2
+          );
 
           videoFaceCounter.textContent = `${lastVideoBoxes.length} wajah terdeteksi`;
         } catch (err) {
-          console.error(err);
+          console.error('detect error:', err);
         } finally {
           isDetectingVideo = false;
         }
@@ -809,14 +811,26 @@
       function drawVideoFrame(includeWatermark) {
         const w = videoCanvas.width;
         const h = videoCanvas.height;
+        if (!w || !h) return;
 
-        vCtx.drawImage(sourceVideo, 0, 0, w, h);
+        // === PERBAIKAN #3: guard sourceVideo invalid state ===
+        if (sourceVideo.readyState < 2) return;
+
+        try {
+          vCtx.drawImage(sourceVideo, 0, 0, w, h);
+        } catch (e) {
+          console.warn('drawImage(sourceVideo) failed:', e);
+          return;
+        }
 
         if (enableVideoCensor.checked && lastVideoBoxes.length > 0) {
           const mode = videoCensorMode.value;
           lastVideoBoxes.forEach(face => {
             const { x, y, width, height } = face;
-            if (width <= 1 || height <= 1) return;
+            // === PERBAIKAN #3: NaN/edge guard ===
+            if (!Number.isFinite(x) || !Number.isFinite(y) ||
+                !Number.isFinite(width) || !Number.isFinite(height)) return;
+            if (width < 2 || height < 2) return;
 
             if (mode === 'blackbox') {
               vCtx.save();
@@ -830,7 +844,9 @@
               vCtx.clip();
               const blurPx = Math.max(10, Math.floor(width / 8));
               vCtx.filter = `blur(${blurPx}px)`;
-              vCtx.drawImage(videoCanvas, x - blurPx, y - blurPx, width + blurPx * 2, height + blurPx * 2, x - blurPx, y - blurPx, width + blurPx * 2, height + blurPx * 2);
+              try {
+                vCtx.drawImage(videoCanvas, x - blurPx, y - blurPx, width + blurPx * 2, height + blurPx * 2, x - blurPx, y - blurPx, width + blurPx * 2, height + blurPx * 2);
+              } catch (e) { /* skip */ }
               vCtx.restore();
             } else {
               const blockSize = Math.max(8, Math.floor(width / 9));
@@ -840,11 +856,15 @@
               const sh = Math.max(1, Math.floor(height / blockSize));
               temp.width = sw;
               temp.height = sh;
-              tCtx.drawImage(videoCanvas, x, y, width, height, 0, 0, sw, sh);
+              try {
+                tCtx.drawImage(videoCanvas, x, y, width, height, 0, 0, sw, sh);
+              } catch (e) { return; }
 
               vCtx.save();
               vCtx.imageSmoothingEnabled = false;
-              vCtx.drawImage(temp, 0, 0, sw, sh, x, y, width, height);
+              try {
+                vCtx.drawImage(temp, 0, 0, sw, sh, x, y, width, height);
+              } catch (e) { /* skip */ }
               vCtx.restore();
             }
           });
@@ -855,44 +875,65 @@
         }
       }
 
+      // === PERBAIKAN #2: try/catch + RAF dijamin jalan ===
       function videoProcessLoop() {
-        if (sourceVideo.paused || sourceVideo.ended) return;
-        detectFacesOnVideoFrame();
-        drawVideoFrame(isRecording);
+        if (sourceVideo.paused || sourceVideo.ended) {
+          videoAnimFrameId = null;
+          return;
+        }
+
+        try { detectFacesOnVideoFrame(); } catch (e) { console.warn('detect loop error:', e); }
+        try { drawVideoFrame(isRecording); } catch (e) { console.warn('draw loop error:', e); }
+
         videoAnimFrameId = requestAnimationFrame(videoProcessLoop);
       }
 
-      videoPreviewBtn.addEventListener('click', () => {
+      function stopVideoLoop() {
+        if (videoAnimFrameId !== null) {
+          cancelAnimationFrame(videoAnimFrameId);
+          videoAnimFrameId = null;
+        }
+      }
+
+      // === PERBAIKAN #4: await play + cancel loop lama ===
+      videoPreviewBtn.addEventListener('click', async () => {
         if (!isVideoLoaded || isRecording) return;
-        if (sourceVideo.paused) {
-          sourceVideo.play();
-          videoStatusInfo.textContent = 'Memutar preview...';
-          videoProcessLoop();
+
+        if (sourceVideo.paused || sourceVideo.ended) {
+          try {
+            await sourceVideo.play();
+            videoStatusInfo.textContent = 'Memutar preview...';
+            stopVideoLoop();
+            videoProcessLoop();
+          } catch (err) {
+            console.error('Play failed:', err);
+            videoStatusInfo.textContent = 'Gagal memutar video (format tidak didukung?)';
+          }
         } else {
           sourceVideo.pause();
-          cancelAnimationFrame(videoAnimFrameId);
+          stopVideoLoop();
           videoStatusInfo.textContent = 'Preview dijeda';
         }
       });
 
       [enableVideoCensor, videoCensorMode].forEach(el => {
         el.addEventListener('input', () => {
-          if (isVideoLoaded && sourceVideo.paused && !isRecording) drawVideoFrame(false);
+          if (isVideoLoaded && sourceVideo.paused && !isRecording) {
+            try { drawVideoFrame(false); } catch (e) { console.warn(e); }
+          }
         });
       });
 
-      // ==== BLOK YANG DIUBAH: prioritaskan MP4 (H.264 + AAC) ====
       videoRenderBtn.addEventListener('click', async () => {
         if (!isVideoLoaded || isRecording) return;
 
-        // Susun kandidat mimeType: MP4 dulu, WebM terakhir
         const mimeTypes = [
-          'video/mp4;codecs=avc1.42E01E,mp4a.40.2', // H.264 Baseline + AAC-LC
-          'video/mp4;codecs=avc1.4D401E,mp4a.40.2', // H.264 Main + AAC-LC
+          'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+          'video/mp4;codecs=avc1.4D401E,mp4a.40.2',
           'video/mp4;codecs=avc1,mp4a.40.2',
           'video/mp4;codecs=avc1',
           'video/mp4',
-          'video/webm;codecs=vp9,opus',              // Cadangan
+          'video/webm;codecs=vp9,opus',
           'video/webm;codecs=vp8,opus',
           'video/webm'
         ];
@@ -919,11 +960,13 @@
           ? 'Merekam MP4 (H.264)...'
           : 'Merekam WebM (tidak kompatibel WhatsApp)...';
 
+        stopVideoLoop();
+
         sourceVideo.pause();
         sourceVideo.currentTime = 0;
         await new Promise(r => { sourceVideo.onseeked = r; });
         await detectFacesOnVideoFrame();
-        drawVideoFrame(true);
+        try { drawVideoFrame(true); } catch (e) { console.warn(e); }
 
         const canvasStream = videoCanvas.captureStream(30);
         try {
@@ -961,15 +1004,17 @@
           videoStatusInfo.textContent = willBeMp4
             ? 'Selesai! Video MP4 ber-watermark siap diunduh.'
             : 'Selesai (WebM). Untuk WhatsApp, gunakan browser yang mendukung MP4.';
-          drawVideoFrame(false);
+          try { drawVideoFrame(false); } catch (e) { console.warn(e); }
         };
 
         mediaRecorder.start(200);
-        sourceVideo.play();
+        try {
+          await sourceVideo.play();
+        } catch (e) { console.warn('Play for recording failed:', e); }
         videoProcessLoop();
 
         sourceVideo.onended = () => {
-          cancelAnimationFrame(videoAnimFrameId);
+          stopVideoLoop();
           if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
           }
