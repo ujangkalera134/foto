@@ -6,6 +6,7 @@
   <title>FaceGuard Studio — Foto & Video Censor + Watermark vidzey.my.id</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.5/build/mp4-muxer.min.js"></script>
   <style>
     .canvas-bg {
       background-color: #f8fafc;
@@ -37,7 +38,6 @@
         </div>
       </div>
 
-      <!-- Switch Mode Foto / Video -->
       <div class="flex items-center gap-3">
         <div class="bg-slate-800 p-1 rounded-xl border border-slate-700 flex text-xs font-semibold">
           <button id="tabPhotoBtn" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white transition-all">Mode Foto</button>
@@ -52,7 +52,6 @@
     </div>
   </header>
 
-  <!-- Main Content -->
   <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
 
     <!-- ==================== PANEL MODE FOTO ==================== -->
@@ -256,7 +255,6 @@
 
   </main>
 
-  <!-- Footer -->
   <footer class="border-t border-slate-800/80 py-5 px-4 text-center bg-slate-900/50">
     <p class="text-xs text-slate-400 flex items-center justify-center gap-1.5">
       <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -270,7 +268,6 @@
     document.addEventListener('DOMContentLoaded', () => {
       const WATERMARK_BRAND = 'vidzey.my.id';
 
-      // Tab Switching
       const tabPhotoBtn = document.getElementById('tabPhotoBtn');
       const tabVideoBtn = document.getElementById('tabVideoBtn');
       const photoSection = document.getElementById('photoSection');
@@ -301,43 +298,31 @@
       tabPhotoBtn.addEventListener('click', () => switchTab('photo'));
       tabVideoBtn.addEventListener('click', () => switchTab('video'));
 
-      // Fungsi Watermark Diagonal Membentang Penuh di Atas Canvas Saat Export/Download
       function drawDiagonalWatermark(targetCtx, width, height) {
         targetCtx.save();
-
         const fontSize = Math.max(18, Math.round(Math.min(width, height) * 0.045));
         targetCtx.font = `800 ${fontSize}px sans-serif`;
         targetCtx.textAlign = 'center';
         targetCtx.textBaseline = 'middle';
-
         const textWidth = targetCtx.measureText(WATERMARK_BRAND).width;
         const stepX = Math.max(220, Math.round(textWidth + fontSize * 3.2));
         const stepY = Math.max(120, Math.round(fontSize * 3.6));
-
-        // Putar di sekitar titik tengah canvas agar membentang diagonal dari ujung ke ujung
         targetCtx.translate(width / 2, height / 2);
         targetCtx.rotate((-28 * Math.PI) / 180);
-
         const diagonalRadius = Math.hypot(width, height) * 0.75;
-
         for (let y = -diagonalRadius; y <= diagonalRadius; y += stepY) {
           for (let x = -diagonalRadius; x <= diagonalRadius; x += stepX) {
-            // Bayangan gelap tipis agar terbaca di area terang
             targetCtx.globalAlpha = 0.28;
             targetCtx.fillStyle = '#0f172a';
             targetCtx.fillText(WATERMARK_BRAND, x + 2, y + 2);
-
-            // Teks utama putih semi-transparan
             targetCtx.globalAlpha = 0.42;
             targetCtx.fillStyle = '#ffffff';
             targetCtx.fillText(WATERMARK_BRAND, x, y);
           }
         }
-
         targetCtx.restore();
       }
 
-      // Load Model TinyFaceDetector Sekali untuk Foto & Video
       const FACE_MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
       let isPhotoLoaded = false;
       let isVideoLoaded = false;
@@ -536,7 +521,6 @@
 
       async function renderPhotoCanvas() {
         if (!originalImage) return;
-
         const width = editorCanvas.width;
         const height = editorCanvas.height;
         pCtx.clearRect(0, 0, width, height);
@@ -617,7 +601,6 @@
             pCtx.beginPath();
             pCtx.rect(x, y, width, height);
             pCtx.clip();
-
             const blurRadius = Math.max(12, Math.floor(width / 8));
             pCtx.filter = `blur(${blurRadius}px)`;
             pCtx.drawImage(editorCanvas, x - blurRadius, y - blurRadius, width + blurRadius * 2, height + blurRadius * 2, x - blurRadius, y - blurRadius, width + blurRadius * 2, height + blurRadius * 2);
@@ -631,7 +614,6 @@
             tempCanvas.width = smallW;
             tempCanvas.height = smallH;
             tempCtx.drawImage(editorCanvas, x, y, width, height, 0, 0, smallW, smallH);
-
             pCtx.save();
             pCtx.imageSmoothingEnabled = false;
             pCtx.drawImage(tempCanvas, 0, 0, smallW, smallH, x, y, width, height);
@@ -688,18 +670,14 @@
         });
       }
 
-      // Download Foto dengan Watermark Membentang vidzey.my.id
       photoDownloadBtn.addEventListener('click', () => {
         if (!originalImage) return;
-
         const exportCanvas = document.createElement('canvas');
         exportCanvas.width = editorCanvas.width;
         exportCanvas.height = editorCanvas.height;
         const eCtx = exportCanvas.getContext('2d');
-
         eCtx.drawImage(editorCanvas, 0, 0);
         drawDiagonalWatermark(eCtx, exportCanvas.width, exportCanvas.height);
-
         const link = document.createElement('a');
         const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
         link.download = `vidzey-${currentPhotoFilter}-${timestamp}.png`;
@@ -729,8 +707,6 @@
       let isRecording = false;
       let isDetectingVideo = false;
       let lastVideoBoxes = [];
-      let mediaRecorder = null;
-      let recordedChunks = [];
       let videoAnimFrameId = null;
 
       videoDropZone.addEventListener('click', () => videoInput.click());
@@ -750,7 +726,6 @@
           alert('Harap pilih file video yang valid (MP4, WEBM, MOV).');
           return;
         }
-
         const url = URL.createObjectURL(file);
         sourceVideo.src = url;
         sourceVideo.load();
@@ -758,8 +733,9 @@
         sourceVideo.onloadedmetadata = () => {
           const maxDim = 720;
           const scale = Math.min(1, maxDim / Math.max(sourceVideo.videoWidth, sourceVideo.videoHeight));
-          videoCanvas.width = Math.round(sourceVideo.videoWidth * scale);
-          videoCanvas.height = Math.round(sourceVideo.videoHeight * scale);
+          // pastikan dimensi genap (syarat encoder H.264)
+          videoCanvas.width = Math.round(sourceVideo.videoWidth * scale) & ~1;
+          videoCanvas.height = Math.round(sourceVideo.videoHeight * scale) & ~1;
 
           isVideoLoaded = true;
           lastVideoBoxes = [];
@@ -847,7 +823,6 @@
               temp.width = sw;
               temp.height = sh;
               tCtx.drawImage(videoCanvas, x, y, width, height, 0, 0, sw, sh);
-
               vCtx.save();
               vCtx.imageSmoothingEnabled = false;
               vCtx.drawImage(temp, 0, 0, sw, sh, x, y, width, height);
@@ -856,7 +831,6 @@
           });
         }
 
-        // Watermark diagonal membentang otomatis saat perekaman video hasil berlangsung
         if (includeWatermark) {
           drawDiagonalWatermark(vCtx, w, h);
         }
@@ -888,77 +862,89 @@
         });
       });
 
-      videoRenderBtn.addEventListener('click', async () => {
-        if (!isVideoLoaded || isRecording) return;
+      // === REKAM KE MP4 H.264 via WebCodecs + mp4-muxer ===
+      async function recordWithWebCodecs() {
+        if (typeof VideoEncoder === 'undefined') {
+          alert('Browser Anda tidak mendukung perekaman MP4 (WebCodecs). Gunakan Chrome/Edge terbaru atau Safari 16.4+.');
+          return;
+        }
+        if (!window.Mp4Muxer || !window.Mp4Muxer.Muxer) {
+          alert('Pustaka MP4 Muxer belum termuat. Coba refresh halaman.');
+          return;
+        }
+
+        // Hentikan preview loop yang mungkin masih berjalan
+        cancelAnimationFrame(videoAnimFrameId);
 
         isRecording = true;
         videoRenderBtn.disabled = true;
         videoPreviewBtn.disabled = true;
         videoDownloadLink.classList.add('hidden');
-        videoRenderBtnText.textContent = 'Merekam Video + Watermark...';
-        videoStatusInfo.textContent = 'Merekam video (jangan tutup tab ini)...';
+        videoRenderBtnText.textContent = 'Merekam ke MP4...';
+        videoStatusInfo.textContent = 'Merekam ke MP4 H.264...';
 
-        sourceVideo.pause();
-        sourceVideo.currentTime = 0;
-        await new Promise(r => { sourceVideo.onseeked = r; });
-        await detectFacesOnVideoFrame();
-        drawVideoFrame(true);
+        const w = videoCanvas.width;
+        const h = videoCanvas.height;
 
-        const canvasStream = videoCanvas.captureStream(30);
         try {
-          const videoStream = sourceVideo.captureStream ? sourceVideo.captureStream() : (sourceVideo.mozCaptureStream ? sourceVideo.mozCaptureStream() : null);
-          if (videoStream) {
-            videoStream.getAudioTracks().forEach(track => canvasStream.addTrack(track));
+          // === Siapkan audio (jika didukung) ===
+          let audioTrack = null;
+          try {
+            const stream = sourceVideo.captureStream
+              ? sourceVideo.captureStream()
+              : (sourceVideo.mozCaptureStream ? sourceVideo.mozCaptureStream() : null);
+            if (stream) {
+              const tracks = stream.getAudioTracks();
+              if (tracks.length > 0) audioTrack = tracks[0];
+            }
+          } catch (e) { console.warn('Audio capture gagal:', e); }
+
+          const audioSettings = audioTrack ? (audioTrack.getSettings() || {}) : {};
+          const sampleRate = audioSettings.sampleRate || 48000;
+          const numberOfChannels = audioSettings.channelCount || 2;
+          const hasAudio = !!audioTrack
+            && typeof AudioEncoder !== 'undefined'
+            && typeof MediaStreamTrackProcessor !== 'undefined';
+
+          // === Siapkan Muxer MP4 ===
+          const Muxer = window.Mp4Muxer.Muxer;
+          const ArrayBufferTarget = window.Mp4Muxer.ArrayBufferTarget;
+
+          const muxerOpts = {
+            target: new ArrayBufferTarget(),
+            video: { codec: 'avc', width: w, height: h },
+            fastStart: 'in-memory'
+          };
+          if (hasAudio) {
+            muxerOpts.audio = { codec: 'aac', numberOfChannels, sampleRate };
           }
-        } catch (err) {
-          console.warn('Audio track tidak dapat digabungkan:', err);
-        }
+          const muxer = new Muxer(muxerOpts);
 
-        const mimeTypes = [
-          'video/webm;codecs=vp9,opus',
-          'video/webm;codecs=vp8,opus',
-          'video/webm',
-          'video/mp4'
-        ];
-        const supportedMime = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || '';
+          // === Siapkan VideoEncoder H.264 ===
+          const videoEncoder = new VideoEncoder({
+            output: (chunk, meta) => { try { muxer.addVideoChunk(chunk, meta); } catch (e) { console.warn(e); } },
+            error: (e) => console.error('VideoEncoder error:', e)
+          });
 
-        recordedChunks = [];
-        mediaRecorder = new MediaRecorder(canvasStream, supportedMime ? { mimeType: supportedMime } : undefined);
-
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data && e.data.size > 0) recordedChunks.push(e.data);
-        };
-
-        mediaRecorder.onstop = () => {
-          const ext = supportedMime.includes('mp4') ? 'mp4' : 'webm';
-          const blob = new Blob(recordedChunks, { type: supportedMime || 'video/webm' });
-          const outputUrl = URL.createObjectURL(blob);
-
-          videoDownloadLink.href = outputUrl;
-          videoDownloadLink.download = `vidzey-video-${Date.now()}.${ext}`;
-          videoDownloadLink.classList.remove('hidden');
-
-          isRecording = false;
-          videoRenderBtn.disabled = false;
-          videoPreviewBtn.disabled = false;
-          videoRenderBtnText.textContent = 'Proses & Rekam Video Hasil';
-          videoStatusInfo.textContent = 'Selesai! Video ber-watermark siap diunduh.';
-          drawVideoFrame(false);
-        };
-
-        mediaRecorder.start(200);
-        sourceVideo.play();
-        videoProcessLoop();
-
-        sourceVideo.onended = () => {
-          cancelAnimationFrame(videoAnimFrameId);
-          if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            mediaRecorder.stop();
+          // Coba baseline dulu (paling kompatibel), fallback ke main
+          let cfg = { codec: 'avc1.42001f', width: w, height: h, bitrate: 2_000_000, framerate: 30 };
+          let ok = false;
+          if (typeof VideoEncoder.isConfigSupported === 'function') {
+            try {
+              const s = await VideoEncoder.isConfigSupported(cfg);
+              ok = !!s.supported;
+            } catch (_) { ok = false; }
+          } else { ok = true; }
+          if (!ok) {
+            cfg = { codec: 'avc1.4d0028', width: w, height: h, bitrate: 2_500_000, framerate: 30 };
           }
-          sourceVideo.onended = null;
-        };
-      });
-    });
-  </script>
-</body>
-</html>
+          videoEncoder.configure(cfg);
+
+          // === Siapkan AudioEncoder AAC (opsional) ===
+          let audioEncoder = null;
+          let audioReader = null;
+          if (hasAudio) {
+            try {
+              audioEncoder = new AudioEncoder({
+                output: (chunk, meta) => { try { muxer.addAudioChunk(chunk, meta); } catch (e) { console.warn(e); } },
+                error: (
