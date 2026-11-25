@@ -160,23 +160,67 @@
               <option value="pastel">Pastel Sketch</option>
             </select>
           </div>
-          <div class="grid grid-cols-2 gap-2.5" id="photoFilterButtons">
-            <button data-filter="normal" disabled class="photo-filter-btn active ring-2 ring-indigo-500 bg-slate-700 text-white py-2 px-3 rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Normal</button>
-            <button data-filter="cartoon" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-3 rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Cartoon</button>
-            <button data-filter="grayscale" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-3 rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Grayscale</button>
-            <button data-filter="vintage" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-3 rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Vintage</button>
+          <div class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1" id="photoFilterButtons">
+            <button data-filter="normal" disabled class="photo-filter-btn active ring-2 ring-indigo-500 bg-slate-700 text-white py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Normal</button>
+            <button data-filter="cartoon" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Cartoon</button>
+            <button data-filter="grayscale" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Grayscale</button>
+            <button data-filter="vintage" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Vintage</button>
+            <button data-filter="sepia" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Sepia</button>
+            <button data-filter="invert" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Invert (Negatif)</button>
+            <button data-filter="highcontrast" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">High Contrast</button>
+            <button data-filter="warm" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Warm Sunset</button>
+            <button data-filter="cool" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Cool Arctic</button>
+            <button data-filter="dramaticbw" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Dramatic B&W</button>
+            <button data-filter="vivid" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Vivid Pop</button>
+            <button data-filter="cyber" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Cyber Neon</button>
+            <button data-filter="matte" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Matte Film</button>
+            <button data-filter="golden" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Golden Hour</button>
+            <button data-filter="emerald" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Emerald Mood</button>
+            <button data-filter="rose" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Rose Tint</button>
+            <button data-filter="lomo" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Lomo</button>
+            <button data-filter="posterize" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Posterize</button>
+            <button data-filter="sharpen" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Sharpen</button>
+            <button data-filter="nightvision" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Night Vision</button>
           </div>
         </div>
 
         <hr class="border-slate-700/80" />
 
+        <div class="bg-slate-900/70 border border-slate-700/80 rounded-xl p-3.5 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-semibold text-slate-200">Pengaturan Watermark</label>
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="watermark-enabled-toggle sr-only peer" checked />
+              <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all relative peer-checked:bg-indigo-600"></div>
+              <span class="ml-2 text-xs text-slate-300">Aktif</span>
+            </label>
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Tulisan Watermark (Isi Sendiri)</label>
+            <input type="text" class="watermark-text-input w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500" value="vidzey.my.id" placeholder="Ketik tulisan watermark..." />
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Gaya Watermark</label>
+            <select class="watermark-style-select w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+              <option value="diagonal-grid" selected>Diagonal Pola (Seperti Sekarang)</option>
+              <option value="horizontal-grid">Lurus Pola (Grid Horizontal)</option>
+              <option value="diagonal-center">Diagonal Tengah (1 Besar)</option>
+              <option value="horizontal-center">Lurus Tengah (1 Besar)</option>
+              <option value="bottom-right">Pojok Kanan Bawah</option>
+              <option value="bottom-left">Pojok Kiri Bawah</option>
+              <option value="top-right">Pojok Kanan Atas</option>
+              <option value="top-left">Pojok Kiri Atas</option>
+              <option value="cross-diagonal">Tumpuk Miring Silang</option>
+            </select>
+          </div>
+        </div>
+
         <div>
-          <p class="text-[11px] text-slate-400 mb-2">Hasil download otomatis menyertakan watermark diagonal <span class="text-indigo-300 font-semibold">vidzey.my.id</span>.</p>
           <button id="photoDownloadBtn" disabled class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center space-x-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            <span>Download Hasil (PNG + Watermark)</span>
+            <span>Download Hasil (PNG)</span>
           </button>
         </div>
       </div>
@@ -304,12 +348,33 @@
 
         <hr class="border-slate-700/80" />
 
-        <div class="bg-slate-900/70 border border-slate-700/80 rounded-xl p-3 space-y-1">
-          <div class="flex items-center justify-between text-xs">
-            <span class="text-slate-400">Watermark Hasil Download</span>
-            <span class="text-indigo-300 font-semibold">vidzey.my.id</span>
+        <div class="bg-slate-900/70 border border-slate-700/80 rounded-xl p-3.5 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-semibold text-slate-200">Pengaturan Watermark</label>
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="watermark-enabled-toggle sr-only peer" checked />
+              <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all relative peer-checked:bg-indigo-600"></div>
+              <span class="ml-2 text-xs text-slate-300">Aktif</span>
+            </label>
           </div>
-          <p class="text-[11px] text-slate-500">Otomatis membentang diagonal di video hasil rekaman yang diunduh.</p>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Tulisan Watermark (Isi Sendiri)</label>
+            <input type="text" class="watermark-text-input w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500" value="vidzey.my.id" placeholder="Ketik tulisan watermark..." />
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Gaya Watermark</label>
+            <select class="watermark-style-select w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+              <option value="diagonal-grid" selected>Diagonal Pola (Seperti Sekarang)</option>
+              <option value="horizontal-grid">Lurus Pola (Grid Horizontal)</option>
+              <option value="diagonal-center">Diagonal Tengah (1 Besar)</option>
+              <option value="horizontal-center">Lurus Tengah (1 Besar)</option>
+              <option value="bottom-right">Pojok Kanan Bawah</option>
+              <option value="bottom-left">Pojok Kiri Bawah</option>
+              <option value="top-right">Pojok Kanan Atas</option>
+              <option value="top-left">Pojok Kiri Atas</option>
+              <option value="cross-diagonal">Tumpuk Miring Silang</option>
+            </select>
+          </div>
         </div>
 
         <div class="space-y-2.5">
@@ -326,7 +391,7 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            <span>Download Video + Watermark</span>
+            <span>Download Video Hasil</span>
           </a>
         </div>
       </div>
@@ -341,7 +406,7 @@
             </svg>
           </div>
           <h3 class="text-base font-medium text-slate-300">Belum ada video yang dimuat</h3>
-          <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">Unggah video dari HP/PC Anda. Sensor wajah dan watermark vidzey.my.id diproses di browser.</p>
+          <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">Unggah video dari HP/PC Anda. Sensor wajah dan watermark diproses di browser.</p>
         </div>
 
         <div id="videoCanvasWrapper" class="hidden w-full flex flex-col items-center justify-center">
@@ -358,18 +423,18 @@
 
   </main>
 
-  <footer class="border-t border-slate-800/80 py-5 px-4 text-center bg-slate-900/50">
+  <footer class="border-t border-slate-800/80 py-5 px-4 text-center bg-slate-900/50 space-y-1">
     <p class="text-xs text-slate-400 flex items-center justify-center gap-1.5">
       <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
       </svg>
       <span>100% Privasi Terjaga. Semua foto & video diproses di HP/PC Anda, tidak pernah di-upload ke server.</span>
     </p>
+    <p class="text-xs text-slate-400">Web ini dibuat oleh <span class="text-indigo-300 font-semibold">Kevin</span>.</p>
   </footer>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const WATERMARK_BRAND = 'vidzey.my.id';
       const STICKER_FONT = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "EmojiOne Color", sans-serif';
 
       const tabPhotoBtn = document.getElementById('tabPhotoBtn');
@@ -377,6 +442,40 @@
       const photoSection = document.getElementById('photoSection');
       const videoSection = document.getElementById('videoSection');
       const modelStatus = document.getElementById('modelStatus');
+
+      const watermarkEnabledToggles = document.querySelectorAll('.watermark-enabled-toggle');
+      const watermarkTextInputs = document.querySelectorAll('.watermark-text-input');
+      const watermarkStyleSelects = document.querySelectorAll('.watermark-style-select');
+
+      let watermarkEnabled = true;
+      let watermarkText = 'vidzey.my.id';
+      let watermarkStyle = 'diagonal-grid';
+
+      function syncWatermarkControls(sourceEl) {
+        if (!sourceEl) return;
+        if (sourceEl.classList.contains('watermark-enabled-toggle')) {
+          watermarkEnabled = sourceEl.checked;
+          watermarkEnabledToggles.forEach(el => { el.checked = watermarkEnabled; });
+        } else if (sourceEl.classList.contains('watermark-text-input')) {
+          watermarkText = sourceEl.value;
+          watermarkTextInputs.forEach(el => {
+            if (el !== sourceEl) el.value = watermarkText;
+          });
+        } else if (sourceEl.classList.contains('watermark-style-select')) {
+          watermarkStyle = sourceEl.value;
+          watermarkStyleSelects.forEach(el => { el.value = watermarkStyle; });
+        }
+      }
+
+      watermarkEnabledToggles.forEach(el => {
+        el.addEventListener('change', () => syncWatermarkControls(el));
+      });
+      watermarkTextInputs.forEach(el => {
+        el.addEventListener('input', () => syncWatermarkControls(el));
+      });
+      watermarkStyleSelects.forEach(el => {
+        el.addEventListener('change', () => syncWatermarkControls(el));
+      });
 
       let isFaceModelLoaded = false;
 
@@ -402,29 +501,121 @@
       tabPhotoBtn.addEventListener('click', () => switchTab('photo'));
       tabVideoBtn.addEventListener('click', () => switchTab('video'));
 
-      function drawDiagonalWatermark(targetCtx, width, height) {
+      function drawWatermarkLabel(targetCtx, text, x, y, fontSize, angleRad = 0, primaryAlpha = 0.42, shadowAlpha = 0.28) {
         targetCtx.save();
-        const fontSize = Math.max(18, Math.round(Math.min(width, height) * 0.045));
+        targetCtx.translate(x, y);
+        if (angleRad !== 0) targetCtx.rotate(angleRad);
         targetCtx.font = `800 ${fontSize}px sans-serif`;
         targetCtx.textAlign = 'center';
         targetCtx.textBaseline = 'middle';
-        const textWidth = targetCtx.measureText(WATERMARK_BRAND).width;
-        const stepX = Math.max(220, Math.round(textWidth + fontSize * 3.2));
-        const stepY = Math.max(120, Math.round(fontSize * 3.6));
-        targetCtx.translate(width / 2, height / 2);
-        targetCtx.rotate((-28 * Math.PI) / 180);
-        const diagonalRadius = Math.hypot(width, height) * 0.75;
-        for (let y = -diagonalRadius; y <= diagonalRadius; y += stepY) {
-          for (let x = -diagonalRadius; x <= diagonalRadius; x += stepX) {
-            targetCtx.globalAlpha = 0.28;
-            targetCtx.fillStyle = '#0f172a';
-            targetCtx.fillText(WATERMARK_BRAND, x + 2, y + 2);
-            targetCtx.globalAlpha = 0.42;
-            targetCtx.fillStyle = '#ffffff';
-            targetCtx.fillText(WATERMARK_BRAND, x, y);
-          }
-        }
+        const offset = Math.max(1.5, Math.round(fontSize * 0.06));
+        targetCtx.globalAlpha = shadowAlpha;
+        targetCtx.fillStyle = '#0f172a';
+        targetCtx.fillText(text, offset, offset);
+        targetCtx.globalAlpha = primaryAlpha;
+        targetCtx.fillStyle = '#ffffff';
+        targetCtx.fillText(text, 0, 0);
         targetCtx.restore();
+      }
+
+      function drawConfiguredWatermark(targetCtx, width, height) {
+        if (!watermarkEnabled) return;
+        const label = (watermarkText || '').trim();
+        if (!label) return;
+
+        const minSide = Math.min(width, height);
+        const patternFontSize = Math.max(18, Math.round(minSide * 0.045));
+        const bannerFontSize = Math.max(24, Math.round(minSide * 0.075));
+        const cornerFontSize = Math.max(15, Math.round(minSide * 0.035));
+        const padX = Math.max(16, Math.round(width * 0.03));
+        const padY = Math.max(16, Math.round(height * 0.03));
+
+        targetCtx.save();
+        targetCtx.font = `800 ${patternFontSize}px sans-serif`;
+        const textWidth = targetCtx.measureText(label).width;
+        targetCtx.restore();
+
+        if (watermarkStyle === 'horizontal-grid') {
+          const stepX = Math.max(200, Math.round(textWidth + patternFontSize * 3.0));
+          const stepY = Math.max(95, Math.round(patternFontSize * 3.2));
+          for (let y = stepY * 0.5; y < height + stepY * 0.5; y += stepY) {
+            for (let x = stepX * 0.5; x < width + stepX * 0.5; x += stepX) {
+              drawWatermarkLabel(targetCtx, label, x, y, patternFontSize, 0, 0.4, 0.26);
+            }
+          }
+        } else if (watermarkStyle === 'diagonal-center') {
+          drawWatermarkLabel(targetCtx, label, width / 2, height / 2, bannerFontSize, (-28 * Math.PI) / 180, 0.48, 0.34);
+        } else if (watermarkStyle === 'horizontal-center') {
+          drawWatermarkLabel(targetCtx, label, width / 2, height / 2, bannerFontSize, 0, 0.48, 0.34);
+        } else if (watermarkStyle === 'bottom-right') {
+          targetCtx.save();
+          targetCtx.font = `800 ${cornerFontSize}px sans-serif`;
+          const wLabel = targetCtx.measureText(label).width;
+          targetCtx.restore();
+          drawWatermarkLabel(targetCtx, label, width - padX - wLabel / 2, height - padY - cornerFontSize / 2, cornerFontSize, 0, 0.55, 0.35);
+        } else if (watermarkStyle === 'bottom-left') {
+          targetCtx.save();
+          targetCtx.font = `800 ${cornerFontSize}px sans-serif`;
+          const wLabel = targetCtx.measureText(label).width;
+          targetCtx.restore();
+          drawWatermarkLabel(targetCtx, label, padX + wLabel / 2, height - padY - cornerFontSize / 2, cornerFontSize, 0, 0.55, 0.35);
+        } else if (watermarkStyle === 'top-right') {
+          targetCtx.save();
+          targetCtx.font = `800 ${cornerFontSize}px sans-serif`;
+          const wLabel = targetCtx.measureText(label).width;
+          targetCtx.restore();
+          drawWatermarkLabel(targetCtx, label, width - padX - wLabel / 2, padY + cornerFontSize / 2, cornerFontSize, 0, 0.55, 0.35);
+        } else if (watermarkStyle === 'top-left') {
+          targetCtx.save();
+          targetCtx.font = `800 ${cornerFontSize}px sans-serif`;
+          const wLabel = targetCtx.measureText(label).width;
+          targetCtx.restore();
+          drawWatermarkLabel(targetCtx, label, padX + wLabel / 2, padY + cornerFontSize / 2, cornerFontSize, 0, 0.55, 0.35);
+        } else if (watermarkStyle === 'cross-diagonal') {
+          const stepX = Math.max(240, Math.round(textWidth + patternFontSize * 3.6));
+          const stepY = Math.max(140, Math.round(patternFontSize * 4.0));
+          const diagonalRadius = Math.hypot(width, height) * 0.75;
+          [-28, 28].forEach(deg => {
+            targetCtx.save();
+            targetCtx.translate(width / 2, height / 2);
+            targetCtx.rotate((deg * Math.PI) / 180);
+            targetCtx.font = `800 ${patternFontSize}px sans-serif`;
+            targetCtx.textAlign = 'center';
+            targetCtx.textBaseline = 'middle';
+            for (let y = -diagonalRadius; y <= diagonalRadius; y += stepY) {
+              for (let x = -diagonalRadius; x <= diagonalRadius; x += stepX) {
+                targetCtx.globalAlpha = 0.22;
+                targetCtx.fillStyle = '#0f172a';
+                targetCtx.fillText(label, x + 2, y + 2);
+                targetCtx.globalAlpha = 0.34;
+                targetCtx.fillStyle = '#ffffff';
+                targetCtx.fillText(label, x, y);
+              }
+            }
+            targetCtx.restore();
+          });
+        } else {
+          const stepX = Math.max(220, Math.round(textWidth + patternFontSize * 3.2));
+          const stepY = Math.max(120, Math.round(patternFontSize * 3.6));
+          targetCtx.save();
+          targetCtx.translate(width / 2, height / 2);
+          targetCtx.rotate((-28 * Math.PI) / 180);
+          targetCtx.font = `800 ${patternFontSize}px sans-serif`;
+          targetCtx.textAlign = 'center';
+          targetCtx.textBaseline = 'middle';
+          const diagonalRadius = Math.hypot(width, height) * 0.75;
+          for (let y = -diagonalRadius; y <= diagonalRadius; y += stepY) {
+            for (let x = -diagonalRadius; x <= diagonalRadius; x += stepX) {
+              targetCtx.globalAlpha = 0.28;
+              targetCtx.fillStyle = '#0f172a';
+              targetCtx.fillText(label, x + 2, y + 2);
+              targetCtx.globalAlpha = 0.42;
+              targetCtx.fillStyle = '#ffffff';
+              targetCtx.fillText(label, x, y);
+            }
+          }
+          targetCtx.restore();
+        }
       }
 
       function drawSticker(targetCtx, x, y, width, height, emoji) {
@@ -570,6 +761,7 @@
       let currentCartoonPreset = 'cel';
       let currentPhotoCensorScale = 1.0;
       const cartoonCache = {};
+      const pixelFilterCache = {};
 
       photoDropZone.addEventListener('click', () => photoInput.click());
       photoDropZone.addEventListener('dragover', (e) => { e.preventDefault(); photoDropZone.classList.add('border-indigo-500', 'bg-slate-800'); });
@@ -598,6 +790,7 @@
             isPhotoLoaded = true;
             photoDetectedFaces = [];
             Object.keys(cartoonCache).forEach(k => delete cartoonCache[k]);
+            Object.keys(pixelFilterCache).forEach(k => delete pixelFilterCache[k]);
             currentPhotoFilter = 'normal';
             updatePhotoFilterUI();
             updatePhotoFaceBadge();
@@ -724,6 +917,92 @@
         return fullCanvas;
       }
 
+      function generatePixelFilterImage(sourceImg, filterName) {
+        const key = `${filterName}_${sourceImg.width}x${sourceImg.height}`;
+        if (pixelFilterCache[key]) return pixelFilterCache[key];
+
+        const maxDim = 900;
+        const scale = Math.min(1, maxDim / Math.max(sourceImg.width, sourceImg.height));
+        const w = Math.max(1, Math.round(sourceImg.width * scale));
+        const h = Math.max(1, Math.round(sourceImg.height * scale));
+
+        const workCanvas = document.createElement('canvas');
+        workCanvas.width = w;
+        workCanvas.height = h;
+        const wCtx = workCanvas.getContext('2d', { willReadFrequently: true });
+        wCtx.drawImage(sourceImg, 0, 0, w, h);
+
+        const imgData = wCtx.getImageData(0, 0, w, h);
+        const d = imgData.data;
+
+        if (filterName === 'posterize') {
+          const levels = 4;
+          const step = 255 / (levels - 1);
+          for (let i = 0; i < d.length; i += 4) {
+            d[i] = Math.round(Math.round(d[i] / step) * step);
+            d[i + 1] = Math.round(Math.round(d[i + 1] / step) * step);
+            d[i + 2] = Math.round(Math.round(d[i + 2] / step) * step);
+          }
+        } else if (filterName === 'lomo') {
+          const cx = w / 2;
+          const cy = h / 2;
+          const maxR = Math.hypot(cx, cy) || 1;
+          for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+              const idx = (y * w + x) * 4;
+              const dist = Math.hypot(x - cx, y - cy) / maxR;
+              const vig = Math.max(0.35, 1 - Math.pow(dist, 1.7) * 0.65);
+              let r = (d[idx] - 128) * 1.25 + 128 + 12;
+              let g = (d[idx + 1] - 128) * 1.18 + 128;
+              let b = (d[idx + 2] - 128) * 1.12 + 128 - 8;
+              d[idx] = Math.max(0, Math.min(255, r * vig));
+              d[idx + 1] = Math.max(0, Math.min(255, g * vig));
+              d[idx + 2] = Math.max(0, Math.min(255, b * vig));
+            }
+          }
+        } else if (filterName === 'nightvision') {
+          for (let i = 0; i < d.length; i += 4) {
+            const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+            const boosted = Math.min(255, lum * 1.35 + 15);
+            d[i] = Math.round(boosted * 0.15);
+            d[i + 1] = Math.round(boosted);
+            d[i + 2] = Math.round(boosted * 0.22);
+          }
+        }
+
+        wCtx.putImageData(imgData, 0, 0);
+
+        const fullCanvas = document.createElement('canvas');
+        fullCanvas.width = sourceImg.width;
+        fullCanvas.height = sourceImg.height;
+        const fCtx = fullCanvas.getContext('2d');
+        fCtx.imageSmoothingEnabled = true;
+        fCtx.imageSmoothingQuality = 'high';
+        fCtx.drawImage(workCanvas, 0, 0, fullCanvas.width, fullCanvas.height);
+
+        pixelFilterCache[key] = fullCanvas;
+        return fullCanvas;
+      }
+
+      const CSS_FILTER_MAP = {
+        normal: 'none',
+        grayscale: 'grayscale(100%) contrast(110%)',
+        vintage: 'sepia(75%) contrast(110%) brightness(95%) saturate(120%)',
+        sepia: 'sepia(100%)',
+        invert: 'invert(100%)',
+        highcontrast: 'contrast(160%) saturate(110%)',
+        warm: 'sepia(35%) saturate(145%) brightness(105%)',
+        cool: 'hue-rotate(185deg) saturate(115%) brightness(102%)',
+        dramaticbw: 'grayscale(100%) contrast(155%) brightness(92%)',
+        vivid: 'saturate(185%) contrast(118%)',
+        cyber: 'hue-rotate(275deg) saturate(175%) contrast(125%)',
+        matte: 'contrast(86%) brightness(106%) saturate(88%)',
+        golden: 'sepia(45%) saturate(155%) brightness(108%)',
+        emerald: 'hue-rotate(115deg) saturate(135%) contrast(108%)',
+        rose: 'hue-rotate(315deg) saturate(130%) brightness(104%)',
+        sharpen: 'contrast(135%) saturate(115%)'
+      };
+
       async function renderPhotoCanvas(skipOverlay = false) {
         if (!originalImage) return;
 
@@ -742,16 +1021,20 @@
           if (!skipOverlay) {
             photoProcessingOverlay.classList.add('hidden');
           }
+        } else if (currentPhotoFilter === 'posterize' || currentPhotoFilter === 'lomo' || currentPhotoFilter === 'nightvision') {
+          if (!skipOverlay) {
+            photoProcessingText.textContent = 'Menerapkan efek foto secara lokal...';
+            photoProcessingOverlay.classList.remove('hidden');
+            await new Promise(r => setTimeout(r, 15));
+          }
+          baseSource = generatePixelFilterImage(originalImage, currentPhotoFilter);
+          if (!skipOverlay) {
+            photoProcessingOverlay.classList.add('hidden');
+          }
         }
 
         pCtx.save();
-        if (currentPhotoFilter === 'grayscale') {
-          pCtx.filter = 'grayscale(100%) contrast(110%)';
-        } else if (currentPhotoFilter === 'vintage') {
-          pCtx.filter = 'sepia(75%) contrast(110%) brightness(95%) saturate(120%)';
-        } else {
-          pCtx.filter = 'none';
-        }
+        pCtx.filter = CSS_FILTER_MAP[currentPhotoFilter] || 'none';
         pCtx.drawImage(baseSource, 0, 0, width, height);
         pCtx.restore();
 
@@ -927,10 +1210,11 @@
         exportCanvas.height = editorCanvas.height;
         const eCtx = exportCanvas.getContext('2d');
         eCtx.drawImage(editorCanvas, 0, 0);
-        drawDiagonalWatermark(eCtx, exportCanvas.width, exportCanvas.height);
+        drawConfiguredWatermark(eCtx, exportCanvas.width, exportCanvas.height);
         const link = document.createElement('a');
         const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-        link.download = `vidzey-${currentPhotoFilter}-${timestamp}.png`;
+        const slug = (watermarkText || '').trim() ? 'watermark' : 'polos';
+        link.download = `vidzey-${currentPhotoFilter}-${watermarkEnabled ? slug : 'polos'}-${timestamp}.png`;
         link.href = exportCanvas.toDataURL('image/png');
         link.click();
       });
@@ -983,6 +1267,8 @@
           originalImage = newImg;
           editorCanvas.width = newImg.width;
           editorCanvas.height = newImg.height;
+          Object.keys(cartoonCache).forEach(k => delete cartoonCache[k]);
+          Object.keys(pixelFilterCache).forEach(k => delete pixelFilterCache[k]);
           photoDetectedFaces = [];
           updatePhotoFaceBadge();
           await renderPhotoCanvas();
@@ -1002,6 +1288,8 @@
         originalImageBackup = null;
         editorCanvas.width = originalImage.width;
         editorCanvas.height = originalImage.height;
+        Object.keys(cartoonCache).forEach(k => delete cartoonCache[k]);
+        Object.keys(pixelFilterCache).forEach(k => delete pixelFilterCache[k]);
         photoDetectedFaces = [];
         updatePhotoFaceBadge();
         await renderPhotoCanvas();
@@ -1094,11 +1382,9 @@
       let lastDetectTime = 0;
       const DETECT_MIN_INTERVAL = 70;
 
-      // Canvas perantara deteksi wajah video (lebih stabil dibanding mengirim <video> langsung)
       const videoDetectCanvas = document.createElement('canvas');
       const videoDetectCtx = videoDetectCanvas.getContext('2d', { willReadFrequently: true });
 
-      // === VARIABEL VIDEO BACKGROUND REMOVAL ===
       let lastSegmentationMask = null;
       let isSegmenting = false;
       let lastSegmentTime = 0;
@@ -1396,7 +1682,7 @@
         }
 
         if (includeWatermark) {
-          drawDiagonalWatermark(vCtx, w, h);
+          drawConfiguredWatermark(vCtx, w, h);
         }
       }
 
@@ -1490,7 +1776,6 @@
         }
       });
 
-      // === DRAG KOTAK SENSOR VIDEO ===
       let videoDrag = { active: false, index: -1, lastX: 0, lastY: 0 };
 
       videoCanvas.addEventListener('pointerdown', (e) => {
@@ -1577,7 +1862,7 @@
         videoRenderBtn.disabled = true;
         videoPreviewBtn.disabled = true;
         videoDownloadLink.classList.add('hidden');
-        videoRenderBtnText.textContent = 'Merekam Video + Watermark...';
+        videoRenderBtnText.textContent = watermarkEnabled ? 'Merekam Video + Watermark...' : 'Merekam Video...';
         videoStatusInfo.textContent = willBeMp4
           ? 'Merekam MP4 (H.264)...'
           : 'Merekam WebM (tidak kompatibel WhatsApp)...';
@@ -1631,7 +1916,7 @@
           videoPreviewBtn.disabled = false;
           videoRenderBtnText.textContent = 'Proses & Rekam Video Hasil';
           videoStatusInfo.textContent = willBeMp4
-            ? 'Selesai! Video MP4 ber-watermark siap diunduh.'
+            ? 'Selesai! Video MP4 siap diunduh.'
             : 'Selesai (WebM). Untuk WhatsApp, gunakan browser yang mendukung MP4.';
           try { drawVideoFrame(false); } catch (e) { console.warn(e); }
         };
