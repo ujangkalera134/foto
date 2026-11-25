@@ -63,16 +63,17 @@
             </svg>
           </div>
           <h3 class="text-sm sm:text-base font-medium text-slate-300">Belum ada foto yang dimuat</h3>
-          <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm mx-auto">Unggah foto di panel kontrol untuk mulai mengedit.</p>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm mx-auto">Pilih foto di langkah 1 untuk langsung mengedit &amp; menyensor wajah.</p>
         </div>
 
         <div id="photoCanvasWrapper" class="hidden w-full flex items-center justify-center rounded-xl overflow-hidden canvas-bg p-2 border border-slate-700">
           <canvas id="editorCanvas" class="rounded-lg shadow-2xl"></canvas>
         </div>
 
-        <div id="photoProcessingOverlay" class="hidden absolute inset-0 bg-slate-900/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-20 px-4 text-center">
+        <div id="photoProcessingOverlay" class="hidden absolute inset-0 bg-slate-900/85 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-20 px-4 text-center">
           <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-          <p id="photoProcessingText" class="text-sm font-medium text-white">Memproses foto...</p>
+          <p id="photoProcessingText" class="text-sm font-semibold text-white">Sedang memproses foto...</p>
+          <p class="text-xs text-slate-400 mt-1">Mohon tunggu sebentar, jangan tutup halaman.</p>
         </div>
       </div>
 
@@ -268,7 +269,7 @@
             </svg>
           </div>
           <h3 class="text-sm sm:text-base font-medium text-slate-300">Belum ada video yang dimuat</h3>
-          <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm mx-auto">Unggah video di panel kontrol untuk memproses sensor dan watermark.</p>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm mx-auto">Pilih video di langkah 1, atur sensor/watermark, lalu klik tombol proses &amp; rekam.</p>
         </div>
 
         <div id="videoCanvasWrapper" class="hidden w-full flex flex-col items-center justify-center">
@@ -278,6 +279,15 @@
           </div>
           <div class="w-full flex items-center justify-center rounded-xl overflow-hidden bg-black p-2 border border-slate-700">
             <canvas id="videoCanvas" class="rounded-lg"></canvas>
+          </div>
+        </div>
+
+        <div id="videoProcessingOverlay" class="hidden absolute inset-0 bg-slate-900/85 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-20 px-4 text-center">
+          <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+          <p id="videoProcessingText" class="text-sm font-semibold text-white">Sedang memproses &amp; merekam video...</p>
+          <p id="videoProcessingSubtext" class="text-xs text-slate-300 mt-1">Mohon tunggu hingga video selesai diputar.</p>
+          <div class="w-56 max-w-full bg-slate-800 rounded-full h-2 mt-3 overflow-hidden border border-slate-700">
+            <div id="videoProgressBar" class="bg-indigo-500 h-full transition-all duration-150" style="width: 0%"></div>
           </div>
         </div>
       </div>
@@ -307,24 +317,14 @@
             </label>
           </div>
 
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-[11px] text-slate-400 mb-1">Mode Sensor</label>
-              <select id="videoCensorMode" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-2 focus:outline-none focus:border-indigo-500">
-                <option value="pixelate">Pixelate (Mosaik)</option>
-                <option value="blur">Blur</option>
-                <option value="blackbox">Kotak Hitam</option>
-                <option value="sticker">Stiker 😷</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-[11px] text-slate-400 mb-1">Kecepatan Deteksi</label>
-              <select id="videoDetectSpeed" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-2 focus:outline-none focus:border-indigo-500">
-                <option value="224">Cepat</option>
-                <option value="320" selected>Seimbang</option>
-                <option value="416">Tinggi</option>
-              </select>
-            </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Mode Sensor</label>
+            <select id="videoCensorMode" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-2 focus:outline-none focus:border-indigo-500">
+              <option value="pixelate">Pixelate (Mosaik)</option>
+              <option value="blur">Blur</option>
+              <option value="blackbox">Kotak Hitam</option>
+              <option value="sticker">Stiker 😷</option>
+            </select>
           </div>
 
           <div id="videoStickerWrapper" class="hidden">
@@ -384,6 +384,18 @@
             </label>
           </div>
           <p class="text-[10px] text-slate-500 leading-snug">⚠ Background diganti hitam saat recording.</p>
+
+          <details class="bg-slate-900/50 border border-slate-700/70 rounded-lg px-3 py-2">
+            <summary class="text-[11px] font-medium text-slate-300 cursor-pointer select-none">Pengaturan Lanjutan Deteksi</summary>
+            <div class="pt-2">
+              <label class="block text-[11px] text-slate-400 mb-1">Kecepatan Deteksi</label>
+              <select id="videoDetectSpeed" class="w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-2 focus:outline-none focus:border-indigo-500">
+                <option value="224" selected>Cepat (Paling Lancar)</option>
+                <option value="320">Seimbang</option>
+                <option value="416">Tinggi</option>
+              </select>
+            </div>
+          </details>
         </div>
 
         <hr class="border-slate-700/80" />
@@ -424,7 +436,7 @@
 
           <button id="videoRenderBtn" disabled class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center space-x-2">
             <span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span>
-            <span id="videoRenderBtnText">Proses &amp; Rekam Video Hasil</span>
+            <span id="videoRenderBtnText">3. Proses &amp; Rekam Video Hasil</span>
           </button>
 
           <a id="videoDownloadLink" class="hidden w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center space-x-2 text-center">
@@ -500,7 +512,7 @@
           photoSection.classList.add('flex', 'lg:grid');
           videoSection.classList.add('hidden');
           videoSection.classList.remove('flex', 'lg:grid');
-          if (sourceVideo && !sourceVideo.paused) sourceVideo.pause();
+          if (sourceVideo && !sourceVideo.paused && !isRecording) sourceVideo.pause();
         } else {
           tabVideoBtn.className = 'px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white transition-all';
           tabPhotoBtn.className = 'px-3.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition-all';
@@ -641,41 +653,49 @@
         targetCtx.restore();
       }
 
+      const censorBoxCanvas = document.createElement('canvas');
+      const censorBoxCtx = censorBoxCanvas.getContext('2d');
+      const censorTempCanvas = document.createElement('canvas');
+      const censorTempCtx = censorTempCanvas.getContext('2d');
+
       function renderCensorBox(targetCtx, sourceCanvas, x, y, width, height, mode, stickerEmoji, invisibility) {
         const alpha = Math.max(0, Math.min(1, invisibility));
         if (alpha <= 0 || width < 1 || height < 1) return;
 
-        const boxCanvas = document.createElement('canvas');
-        boxCanvas.width = Math.max(1, Math.ceil(width));
-        boxCanvas.height = Math.max(1, Math.ceil(height));
-        const bCtx = boxCanvas.getContext('2d');
+        const bw = Math.max(1, Math.ceil(width));
+        const bh = Math.max(1, Math.ceil(height));
+        censorBoxCanvas.width = bw;
+        censorBoxCanvas.height = bh;
+        censorBoxCtx.clearRect(0, 0, bw, bh);
+        censorBoxCtx.filter = 'none';
+        censorBoxCtx.imageSmoothingEnabled = true;
 
         if (mode === 'blackbox') {
-          bCtx.fillStyle = '#0f172a';
-          bCtx.fillRect(0, 0, boxCanvas.width, boxCanvas.height);
+          censorBoxCtx.fillStyle = '#0f172a';
+          censorBoxCtx.fillRect(0, 0, bw, bh);
         } else if (mode === 'blur') {
-          const blurRadius = Math.max(12, Math.floor(width / 8));
-          bCtx.filter = `blur(${blurRadius}px)`;
-          bCtx.drawImage(sourceCanvas, x, y, width, height, 0, 0, boxCanvas.width, boxCanvas.height);
+          const blurRadius = Math.max(10, Math.min(24, Math.floor(width / 9)));
+          censorBoxCtx.filter = `blur(${blurRadius}px)`;
+          censorBoxCtx.drawImage(sourceCanvas, x, y, width, height, 0, 0, bw, bh);
+          censorBoxCtx.filter = 'none';
         } else if (mode === 'sticker') {
-          drawSticker(bCtx, 0, 0, boxCanvas.width, boxCanvas.height, stickerEmoji);
+          drawSticker(censorBoxCtx, 0, 0, bw, bh, stickerEmoji);
         } else {
           const pixelBlockSize = Math.max(8, Math.floor(width / 10));
-          const tempCanvas = document.createElement('canvas');
-          const tempCtx = tempCanvas.getContext('2d');
           const smallW = Math.max(1, Math.floor(width / pixelBlockSize));
           const smallH = Math.max(1, Math.floor(height / pixelBlockSize));
-          tempCanvas.width = smallW;
-          tempCanvas.height = smallH;
-          tempCtx.drawImage(sourceCanvas, x, y, width, height, 0, 0, smallW, smallH);
+          censorTempCanvas.width = smallW;
+          censorTempCanvas.height = smallH;
+          censorTempCtx.clearRect(0, 0, smallW, smallH);
+          censorTempCtx.drawImage(sourceCanvas, x, y, width, height, 0, 0, smallW, smallH);
 
-          bCtx.imageSmoothingEnabled = false;
-          bCtx.drawImage(tempCanvas, 0, 0, smallW, smallH, 0, 0, boxCanvas.width, boxCanvas.height);
+          censorBoxCtx.imageSmoothingEnabled = false;
+          censorBoxCtx.drawImage(censorTempCanvas, 0, 0, smallW, smallH, 0, 0, bw, bh);
         }
 
         targetCtx.save();
         targetCtx.globalAlpha = alpha;
-        targetCtx.drawImage(boxCanvas, x, y, width, height);
+        targetCtx.drawImage(censorBoxCanvas, x, y, width, height);
         targetCtx.restore();
       }
 
@@ -1070,7 +1090,7 @@
         let baseSource = originalImage;
         if (currentPhotoFilter === 'cartoon') {
           if (!skipOverlay) {
-            photoProcessingText.textContent = 'Menerapkan efek kartun...';
+            photoProcessingText.textContent = 'Sedang menerapkan efek kartun...';
             photoProcessingOverlay.classList.remove('hidden');
             await new Promise(r => setTimeout(r, 15));
           }
@@ -1080,7 +1100,7 @@
           }
         } else if (currentPhotoFilter === 'posterize' || currentPhotoFilter === 'lomo' || currentPhotoFilter === 'nightvision') {
           if (!skipOverlay) {
-            photoProcessingText.textContent = 'Menerapkan efek foto...';
+            photoProcessingText.textContent = 'Sedang menerapkan efek foto...';
             photoProcessingOverlay.classList.remove('hidden');
             await new Promise(r => setTimeout(r, 15));
           }
@@ -1102,7 +1122,7 @@
 
       photoDetectBtn.addEventListener('click', async () => {
         if (!originalImage || !isFaceModelLoaded) return;
-        photoProcessingText.textContent = 'Mendeteksi wajah...';
+        photoProcessingText.textContent = 'Sedang mendeteksi wajah...';
         photoProcessingOverlay.classList.remove('hidden');
         photoDetectBtn.disabled = true;
 
@@ -1241,7 +1261,7 @@
 
       photoRemoveBgBtn.addEventListener('click', async () => {
         if (!originalImage) return;
-        photoProcessingText.textContent = 'Menghapus background...';
+        photoProcessingText.textContent = 'Sedang menghapus background foto...';
         photoProcessingOverlay.classList.remove('hidden');
         photoRemoveBgBtn.disabled = true;
 
@@ -1376,6 +1396,10 @@
       const videoCanvasWrapper = document.getElementById('videoCanvasWrapper');
       const videoStatusInfo = document.getElementById('videoStatusInfo');
       const videoFaceCounter = document.getElementById('videoFaceCounter');
+      const videoProcessingOverlay = document.getElementById('videoProcessingOverlay');
+      const videoProcessingText = document.getElementById('videoProcessingText');
+      const videoProcessingSubtext = document.getElementById('videoProcessingSubtext');
+      const videoProgressBar = document.getElementById('videoProgressBar');
       const videoCensorScaleInput = document.getElementById('videoCensorScale');
       const videoCensorScaleValue = document.getElementById('videoCensorScaleValue');
       const videoCensorInvisibilityInput = document.getElementById('videoCensorInvisibility');
@@ -1403,7 +1427,7 @@
       let currentVideoSticker = '😷';
 
       let lastDetectTime = 0;
-      const DETECT_MIN_INTERVAL = 70;
+      const DETECT_MIN_INTERVAL = 140;
 
       const videoDetectCanvas = document.createElement('canvas');
       const videoDetectCtx = videoDetectCanvas.getContext('2d', { willReadFrequently: true });
@@ -1411,6 +1435,7 @@
       let lastSegmentationMask = null;
       let isSegmenting = false;
       let lastSegmentTime = 0;
+      const SEGMENT_MIN_INTERVAL = 150;
       let videoSegInstance = null;
       let videoSegInitPromise = null;
       let segMaskCanvas = document.createElement('canvas');
@@ -1419,6 +1444,18 @@
       let compositeCtx = compositeCanvas.getContext('2d');
       const videoSegInputCanvas = document.createElement('canvas');
       const videoSegInputCtx = videoSegInputCanvas.getContext('2d');
+
+      function setVideoProcessingState(active, title = '', subtext = '', progressPct = 0) {
+        if (active) {
+          if (title) videoProcessingText.textContent = title;
+          if (subtext) videoProcessingSubtext.textContent = subtext;
+          videoProgressBar.style.width = `${Math.max(0, Math.min(100, progressPct))}%`;
+          videoProcessingOverlay.classList.remove('hidden');
+        } else {
+          videoProcessingOverlay.classList.add('hidden');
+          videoProgressBar.style.width = '0%';
+        }
+      }
 
       async function initVideoBgRemoval() {
         if (videoSegInstance) return videoSegInstance;
@@ -1455,7 +1492,7 @@
         if (!sourceVideo || sourceVideo.readyState < 2 || !sourceVideo.videoWidth || !sourceVideo.videoHeight) return;
 
         const now = performance.now();
-        if (!force && now - lastSegmentTime < 90) return;
+        if (!force && now - lastSegmentTime < SEGMENT_MIN_INTERVAL) return;
 
         const seg = videoSegInstance || await initVideoBgRemoval();
         if (!seg) return;
@@ -1463,7 +1500,7 @@
         isSegmenting = true;
         lastSegmentTime = now;
         try {
-          const maxSegDim = 512;
+          const maxSegDim = 320;
           const scale = Math.min(1, maxSegDim / Math.max(sourceVideo.videoWidth, sourceVideo.videoHeight));
           const sw = Math.max(1, Math.round(sourceVideo.videoWidth * scale));
           const sh = Math.max(1, Math.round(sourceVideo.videoHeight * scale));
@@ -1478,7 +1515,7 @@
                 settled = true;
                 resolve();
               }
-            }, 1500);
+            }, 600);
 
             seg.onResults((results) => {
               if (results && results.segmentationMask) {
@@ -1528,19 +1565,21 @@
           return;
         }
 
+        stopVideoLoop();
         const url = URL.createObjectURL(file);
         sourceVideo.src = url;
         sourceVideo.load();
 
         sourceVideo.onloadedmetadata = () => {
-          const maxDim = 720;
+          const maxDim = 640;
           const scale = Math.min(1, maxDim / Math.max(sourceVideo.videoWidth, sourceVideo.videoHeight));
-          videoCanvas.width = Math.round(sourceVideo.videoWidth * scale) & ~1;
-          videoCanvas.height = Math.round(sourceVideo.videoHeight * scale) & ~1;
+          videoCanvas.width = Math.max(2, Math.round(sourceVideo.videoWidth * scale) & ~1);
+          videoCanvas.height = Math.max(2, Math.round(sourceVideo.videoHeight * scale) & ~1);
 
           isVideoLoaded = true;
           lastVideoBoxes = [];
           lastDetectTime = 0;
+          lastSegmentTime = 0;
           lastSegmentationMask = null;
           videoDownloadLink.classList.add('hidden');
 
@@ -1548,6 +1587,7 @@
           videoCanvasWrapper.classList.remove('hidden');
           videoPreviewBtn.disabled = false;
           if (isFaceModelLoaded) videoRenderBtn.disabled = false;
+          videoStatusInfo.textContent = 'Video siap diproses';
 
           if (enableVideoBgRemoval.checked) {
             initVideoBgRemoval();
@@ -1557,6 +1597,7 @@
         };
 
         sourceVideo.onseeked = async () => {
+          if (isRecording) return;
           try {
             if (enableVideoBgRemoval.checked) {
               await runVideoSegmentationStep(true);
@@ -1577,7 +1618,7 @@
 
         isDetectingVideo = true;
         try {
-          const maxDetectDim = 640;
+          const maxDetectDim = 360;
           const dScale = Math.min(1, maxDetectDim / Math.max(sourceVideo.videoWidth, sourceVideo.videoHeight));
           const dw = Math.max(1, Math.round(sourceVideo.videoWidth * dScale));
           const dh = Math.max(1, Math.round(sourceVideo.videoHeight * dScale));
@@ -1585,10 +1626,10 @@
           videoDetectCanvas.height = dh;
           videoDetectCtx.drawImage(sourceVideo, 0, 0, dw, dh);
 
-          const inputSize = parseInt(videoDetectSpeed.value, 10);
-          const options = new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold: 0.4 });
+          const inputSize = parseInt(videoDetectSpeed.value, 10) || 224;
+          const options = new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold: 0.42 });
           const rawDetections = await faceapi.detectAllFaces(videoDetectCanvas, options);
-          const detections = filterValidDetections(rawDetections, dw, dh, 0.4, 12);
+          const detections = filterValidDetections(rawDetections, dw, dh, 0.42, 10);
 
           const scaleX = videoCanvas.width / dw;
           const scaleY = videoCanvas.height / dh;
@@ -1628,7 +1669,9 @@
         if (sourceVideo.readyState < 2) return;
 
         if (enableVideoBgRemoval.checked) {
-          runVideoSegmentationStep(false);
+          if (!isSegmenting) {
+            runVideoSegmentationStep(false);
+          }
 
           if (lastSegmentationMask && lastSegmentationMask.width > 0 && lastSegmentationMask.height > 0) {
             compositeCanvas.width = w;
@@ -1671,6 +1714,12 @@
         if (includeWatermark) {
           drawConfiguredWatermark(vCtx, w, h);
         }
+
+        if (isRecording && Number.isFinite(sourceVideo.duration) && sourceVideo.duration > 0) {
+          const pct = Math.min(100, Math.round((sourceVideo.currentTime / sourceVideo.duration) * 100));
+          videoProgressBar.style.width = `${pct}%`;
+          videoProcessingSubtext.textContent = `Sedang memproses video: ${pct}% (${sourceVideo.currentTime.toFixed(1)}s / ${sourceVideo.duration.toFixed(1)}s)`;
+        }
       }
 
       function videoProcessLoop() {
@@ -1679,8 +1728,10 @@
           return;
         }
 
-        try { detectFacesOnVideoFrame(false); } catch (e) { console.warn('detect loop error:', e); }
         try { drawVideoFrame(isRecording); } catch (e) { console.warn('draw loop error:', e); }
+        if (!isDetectingVideo) {
+          detectFacesOnVideoFrame(false);
+        }
 
         videoAnimFrameId = requestAnimationFrame(videoProcessLoop);
       }
@@ -1698,7 +1749,10 @@
         if (sourceVideo.paused || sourceVideo.ended) {
           try {
             if (enableVideoBgRemoval.checked) {
-              await initVideoBgRemoval();
+              initVideoBgRemoval();
+            }
+            if (sourceVideo.ended) {
+              sourceVideo.currentTime = 0;
             }
             await sourceVideo.play();
             videoStatusInfo.textContent = 'Memutar preview...';
@@ -1759,10 +1813,12 @@
 
       enableVideoBgRemoval.addEventListener('change', async () => {
         if (enableVideoBgRemoval.checked) {
+          setVideoProcessingState(true, 'Menyiapkan penghapus background...', 'Memuat model segmentasi video.', 10);
           await initVideoBgRemoval();
           if (isVideoLoaded && sourceVideo.readyState >= 2) {
             await runVideoSegmentationStep(true);
           }
+          setVideoProcessingState(false);
         } else {
           lastSegmentationMask = null;
         }
@@ -1857,10 +1913,14 @@
         videoRenderBtn.disabled = true;
         videoPreviewBtn.disabled = true;
         videoDownloadLink.classList.add('hidden');
-        videoRenderBtnText.textContent = watermarkEnabled ? 'Merekam Video + Watermark...' : 'Merekam Video...';
-        videoStatusInfo.textContent = willBeMp4
-          ? 'Merekam MP4 (H.264)...'
-          : 'Merekam WebM (tidak kompatibel WhatsApp)...';
+        videoRenderBtnText.textContent = watermarkEnabled ? 'Sedang Merekam Video + Watermark...' : 'Sedang Merekam Video...';
+        videoStatusInfo.textContent = 'Sedang memproses & merekam video...';
+        setVideoProcessingState(
+          true,
+          'Sedang memproses & merekam video...',
+          'Menyiapkan frame awal video...',
+          2
+        );
 
         stopVideoLoop();
 
@@ -1869,8 +1929,17 @@
         }
 
         sourceVideo.pause();
-        sourceVideo.currentTime = 0;
-        await new Promise(r => { sourceVideo.onseeked = r; });
+        if (sourceVideo.currentTime !== 0) {
+          await new Promise((resolve) => {
+            const onSeeked = () => {
+              sourceVideo.removeEventListener('seeked', onSeeked);
+              resolve();
+            };
+            sourceVideo.addEventListener('seeked', onSeeked);
+            sourceVideo.currentTime = 0;
+          });
+        }
+
         if (enableVideoBgRemoval.checked) {
           await runVideoSegmentationStep(true);
         }
@@ -1909,26 +1978,37 @@
           isRecording = false;
           videoRenderBtn.disabled = false;
           videoPreviewBtn.disabled = false;
-          videoRenderBtnText.textContent = 'Proses & Rekam Video Hasil';
+          videoRenderBtnText.textContent = '3. Proses & Rekam Video Hasil';
+          setVideoProcessingState(false);
           videoStatusInfo.textContent = willBeMp4
             ? 'Selesai! Video MP4 siap diunduh.'
             : 'Selesai (WebM). Untuk WhatsApp, gunakan browser yang mendukung MP4.';
           try { drawVideoFrame(false); } catch (e) { console.warn(e); }
         };
 
-        mediaRecorder.start(200);
-        try {
-          await sourceVideo.play();
-        } catch (e) { console.warn('Play for recording failed:', e); }
-        videoProcessLoop();
-
         sourceVideo.onended = () => {
           stopVideoLoop();
-          if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            mediaRecorder.stop();
-          }
+          try { drawVideoFrame(true); } catch (e) { console.warn(e); }
+          setTimeout(() => {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+              mediaRecorder.stop();
+            }
+          }, 120);
           sourceVideo.onended = null;
         };
+
+        mediaRecorder.start(100);
+        try {
+          await sourceVideo.play();
+        } catch (e) {
+          console.warn('Play for recording failed:', e);
+          setVideoProcessingState(false);
+          isRecording = false;
+          videoRenderBtn.disabled = false;
+          videoPreviewBtn.disabled = false;
+          return;
+        }
+        videoProcessLoop();
       });
     });
   </script>
