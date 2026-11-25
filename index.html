@@ -6,7 +6,6 @@
   <title>FaceGuard Studio — Foto & Video Censor + Watermark vidzey.my.id</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.5/build/mp4-muxer.min.js"></script>
   <style>
     .canvas-bg {
       background-color: #f8fafc;
@@ -268,6 +267,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       const WATERMARK_BRAND = 'vidzey.my.id';
 
+      // Tab Switching
       const tabPhotoBtn = document.getElementById('tabPhotoBtn');
       const tabVideoBtn = document.getElementById('tabVideoBtn');
       const photoSection = document.getElementById('photoSection');
@@ -298,31 +298,40 @@
       tabPhotoBtn.addEventListener('click', () => switchTab('photo'));
       tabVideoBtn.addEventListener('click', () => switchTab('video'));
 
+      // Watermark diagonal
       function drawDiagonalWatermark(targetCtx, width, height) {
         targetCtx.save();
+
         const fontSize = Math.max(18, Math.round(Math.min(width, height) * 0.045));
         targetCtx.font = `800 ${fontSize}px sans-serif`;
         targetCtx.textAlign = 'center';
         targetCtx.textBaseline = 'middle';
+
         const textWidth = targetCtx.measureText(WATERMARK_BRAND).width;
         const stepX = Math.max(220, Math.round(textWidth + fontSize * 3.2));
         const stepY = Math.max(120, Math.round(fontSize * 3.6));
+
         targetCtx.translate(width / 2, height / 2);
         targetCtx.rotate((-28 * Math.PI) / 180);
+
         const diagonalRadius = Math.hypot(width, height) * 0.75;
+
         for (let y = -diagonalRadius; y <= diagonalRadius; y += stepY) {
           for (let x = -diagonalRadius; x <= diagonalRadius; x += stepX) {
             targetCtx.globalAlpha = 0.28;
             targetCtx.fillStyle = '#0f172a';
             targetCtx.fillText(WATERMARK_BRAND, x + 2, y + 2);
+
             targetCtx.globalAlpha = 0.42;
             targetCtx.fillStyle = '#ffffff';
             targetCtx.fillText(WATERMARK_BRAND, x, y);
           }
         }
+
         targetCtx.restore();
       }
 
+      // Load Model
       const FACE_MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
       let isPhotoLoaded = false;
       let isVideoLoaded = false;
@@ -521,6 +530,7 @@
 
       async function renderPhotoCanvas() {
         if (!originalImage) return;
+
         const width = editorCanvas.width;
         const height = editorCanvas.height;
         pCtx.clearRect(0, 0, width, height);
@@ -601,6 +611,7 @@
             pCtx.beginPath();
             pCtx.rect(x, y, width, height);
             pCtx.clip();
+
             const blurRadius = Math.max(12, Math.floor(width / 8));
             pCtx.filter = `blur(${blurRadius}px)`;
             pCtx.drawImage(editorCanvas, x - blurRadius, y - blurRadius, width + blurRadius * 2, height + blurRadius * 2, x - blurRadius, y - blurRadius, width + blurRadius * 2, height + blurRadius * 2);
@@ -614,6 +625,7 @@
             tempCanvas.width = smallW;
             tempCanvas.height = smallH;
             tempCtx.drawImage(editorCanvas, x, y, width, height, 0, 0, smallW, smallH);
+
             pCtx.save();
             pCtx.imageSmoothingEnabled = false;
             pCtx.drawImage(tempCanvas, 0, 0, smallW, smallH, x, y, width, height);
@@ -672,12 +684,15 @@
 
       photoDownloadBtn.addEventListener('click', () => {
         if (!originalImage) return;
+
         const exportCanvas = document.createElement('canvas');
         exportCanvas.width = editorCanvas.width;
         exportCanvas.height = editorCanvas.height;
         const eCtx = exportCanvas.getContext('2d');
+
         eCtx.drawImage(editorCanvas, 0, 0);
         drawDiagonalWatermark(eCtx, exportCanvas.width, exportCanvas.height);
+
         const link = document.createElement('a');
         const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
         link.download = `vidzey-${currentPhotoFilter}-${timestamp}.png`;
@@ -707,6 +722,8 @@
       let isRecording = false;
       let isDetectingVideo = false;
       let lastVideoBoxes = [];
+      let mediaRecorder = null;
+      let recordedChunks = [];
       let videoAnimFrameId = null;
 
       videoDropZone.addEventListener('click', () => videoInput.click());
@@ -726,6 +743,7 @@
           alert('Harap pilih file video yang valid (MP4, WEBM, MOV).');
           return;
         }
+
         const url = URL.createObjectURL(file);
         sourceVideo.src = url;
         sourceVideo.load();
@@ -733,7 +751,7 @@
         sourceVideo.onloadedmetadata = () => {
           const maxDim = 720;
           const scale = Math.min(1, maxDim / Math.max(sourceVideo.videoWidth, sourceVideo.videoHeight));
-          // pastikan dimensi genap (syarat encoder H.264)
+          // dimensi wajib genap untuk encoder H.264
           videoCanvas.width = Math.round(sourceVideo.videoWidth * scale) & ~1;
           videoCanvas.height = Math.round(sourceVideo.videoHeight * scale) & ~1;
 
@@ -823,6 +841,7 @@
               temp.width = sw;
               temp.height = sh;
               tCtx.drawImage(videoCanvas, x, y, width, height, 0, 0, sw, sh);
+
               vCtx.save();
               vCtx.imageSmoothingEnabled = false;
               vCtx.drawImage(temp, 0, 0, sw, sh, x, y, width, height);
@@ -862,89 +881,102 @@
         });
       });
 
-      // === REKAM KE MP4 H.264 via WebCodecs + mp4-muxer ===
-      async function recordWithWebCodecs() {
-        if (typeof VideoEncoder === 'undefined') {
-          alert('Browser Anda tidak mendukung perekaman MP4 (WebCodecs). Gunakan Chrome/Edge terbaru atau Safari 16.4+.');
-          return;
-        }
-        if (!window.Mp4Muxer || !window.Mp4Muxer.Muxer) {
-          alert('Pustaka MP4 Muxer belum termuat. Coba refresh halaman.');
-          return;
-        }
+      // ==== BLOK YANG DIUBAH: prioritaskan MP4 (H.264 + AAC) ====
+      videoRenderBtn.addEventListener('click', async () => {
+        if (!isVideoLoaded || isRecording) return;
 
-        // Hentikan preview loop yang mungkin masih berjalan
-        cancelAnimationFrame(videoAnimFrameId);
+        // Susun kandidat mimeType: MP4 dulu, WebM terakhir
+        const mimeTypes = [
+          'video/mp4;codecs=avc1.42E01E,mp4a.40.2', // H.264 Baseline + AAC-LC
+          'video/mp4;codecs=avc1.4D401E,mp4a.40.2', // H.264 Main + AAC-LC
+          'video/mp4;codecs=avc1,mp4a.40.2',
+          'video/mp4;codecs=avc1',
+          'video/mp4',
+          'video/webm;codecs=vp9,opus',              // Cadangan
+          'video/webm;codecs=vp8,opus',
+          'video/webm'
+        ];
+        const supportedMime = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || '';
+        const willBeMp4 = supportedMime.toLowerCase().includes('mp4');
+
+        if (!willBeMp4) {
+          const proceed = confirm(
+            '⚠ PERINGATAN FORMAT VIDEO\n\n' +
+            'Browser ini TIDAK mendukung perekaman MP4.\n' +
+            'Hasil video akan berformat WebM — tidak bisa dibuka di galeri HP / WhatsApp.\n\n' +
+            'Solusi: pakai Chrome/Edge versi terbaru, atau Safari 16.4+.\n\n' +
+            'Tetap lanjut merekam sebagai WebM?'
+          );
+          if (!proceed) return;
+        }
 
         isRecording = true;
         videoRenderBtn.disabled = true;
         videoPreviewBtn.disabled = true;
         videoDownloadLink.classList.add('hidden');
-        videoRenderBtnText.textContent = 'Merekam ke MP4...';
-        videoStatusInfo.textContent = 'Merekam ke MP4 H.264...';
+        videoRenderBtnText.textContent = 'Merekam Video + Watermark...';
+        videoStatusInfo.textContent = willBeMp4
+          ? 'Merekam MP4 (H.264)...'
+          : 'Merekam WebM (tidak kompatibel WhatsApp)...';
 
-        const w = videoCanvas.width;
-        const h = videoCanvas.height;
+        sourceVideo.pause();
+        sourceVideo.currentTime = 0;
+        await new Promise(r => { sourceVideo.onseeked = r; });
+        await detectFacesOnVideoFrame();
+        drawVideoFrame(true);
 
+        const canvasStream = videoCanvas.captureStream(30);
         try {
-          // === Siapkan audio (jika didukung) ===
-          let audioTrack = null;
-          try {
-            const stream = sourceVideo.captureStream
-              ? sourceVideo.captureStream()
-              : (sourceVideo.mozCaptureStream ? sourceVideo.mozCaptureStream() : null);
-            if (stream) {
-              const tracks = stream.getAudioTracks();
-              if (tracks.length > 0) audioTrack = tracks[0];
-            }
-          } catch (e) { console.warn('Audio capture gagal:', e); }
-
-          const audioSettings = audioTrack ? (audioTrack.getSettings() || {}) : {};
-          const sampleRate = audioSettings.sampleRate || 48000;
-          const numberOfChannels = audioSettings.channelCount || 2;
-          const hasAudio = !!audioTrack
-            && typeof AudioEncoder !== 'undefined'
-            && typeof MediaStreamTrackProcessor !== 'undefined';
-
-          // === Siapkan Muxer MP4 ===
-          const Muxer = window.Mp4Muxer.Muxer;
-          const ArrayBufferTarget = window.Mp4Muxer.ArrayBufferTarget;
-
-          const muxerOpts = {
-            target: new ArrayBufferTarget(),
-            video: { codec: 'avc', width: w, height: h },
-            fastStart: 'in-memory'
-          };
-          if (hasAudio) {
-            muxerOpts.audio = { codec: 'aac', numberOfChannels, sampleRate };
+          const videoStream = sourceVideo.captureStream ? sourceVideo.captureStream() : (sourceVideo.mozCaptureStream ? sourceVideo.mozCaptureStream() : null);
+          if (videoStream) {
+            videoStream.getAudioTracks().forEach(track => canvasStream.addTrack(track));
           }
-          const muxer = new Muxer(muxerOpts);
+        } catch (err) {
+          console.warn('Audio track tidak dapat digabungkan:', err);
+        }
 
-          // === Siapkan VideoEncoder H.264 ===
-          const videoEncoder = new VideoEncoder({
-            output: (chunk, meta) => { try { muxer.addVideoChunk(chunk, meta); } catch (e) { console.warn(e); } },
-            error: (e) => console.error('VideoEncoder error:', e)
-          });
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(canvasStream, supportedMime ? { mimeType: supportedMime } : undefined);
 
-          // Coba baseline dulu (paling kompatibel), fallback ke main
-          let cfg = { codec: 'avc1.42001f', width: w, height: h, bitrate: 2_000_000, framerate: 30 };
-          let ok = false;
-          if (typeof VideoEncoder.isConfigSupported === 'function') {
-            try {
-              const s = await VideoEncoder.isConfigSupported(cfg);
-              ok = !!s.supported;
-            } catch (_) { ok = false; }
-          } else { ok = true; }
-          if (!ok) {
-            cfg = { codec: 'avc1.4d0028', width: w, height: h, bitrate: 2_500_000, framerate: 30 };
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const ext = willBeMp4 ? 'mp4' : 'webm';
+          const blobType = willBeMp4
+            ? (supportedMime || 'video/mp4')
+            : (supportedMime || 'video/webm');
+          const blob = new Blob(recordedChunks, { type: blobType });
+          const outputUrl = URL.createObjectURL(blob);
+
+          videoDownloadLink.href = outputUrl;
+          videoDownloadLink.download = `vidzey-video-${Date.now()}.${ext}`;
+          videoDownloadLink.classList.remove('hidden');
+
+          isRecording = false;
+          videoRenderBtn.disabled = false;
+          videoPreviewBtn.disabled = false;
+          videoRenderBtnText.textContent = 'Proses & Rekam Video Hasil';
+          videoStatusInfo.textContent = willBeMp4
+            ? 'Selesai! Video MP4 ber-watermark siap diunduh.'
+            : 'Selesai (WebM). Untuk WhatsApp, gunakan browser yang mendukung MP4.';
+          drawVideoFrame(false);
+        };
+
+        mediaRecorder.start(200);
+        sourceVideo.play();
+        videoProcessLoop();
+
+        sourceVideo.onended = () => {
+          cancelAnimationFrame(videoAnimFrameId);
+          if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
           }
-          videoEncoder.configure(cfg);
-
-          // === Siapkan AudioEncoder AAC (opsional) ===
-          let audioEncoder = null;
-          let audioReader = null;
-          if (hasAudio) {
-            try {
-              audioEncoder = new AudioEncoder({
-                output: (chunk, meta) => { try { muxer.addAudioChunk(chunk, meta); } catch (e) { console.warn(e); } },
-                error: (
+          sourceVideo.onended = null;
+        };
+      });
+    });
+  </script>
+</body>
+</html>
