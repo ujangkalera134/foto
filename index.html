@@ -85,10 +85,18 @@
                 <option value="pixelate">Mode: Pixelate</option>
                 <option value="blur">Mode: Blur</option>
                 <option value="blackbox">Mode: Kotak Hitam</option>
+                <option value="sticker">Mode: Stiker 😷</option>
               </select>
               <button id="photoClearCensorBtn" disabled class="bg-slate-700/70 hover:bg-slate-700 disabled:opacity-50 text-slate-300 text-xs font-medium rounded-lg px-3 py-2 transition-colors">
                 Hapus Sensor
               </button>
+            </div>
+            <div>
+              <label class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                <span>Ukuran Sensor</span>
+                <span id="photoCensorScaleValue" class="text-indigo-300 font-mono">100%</span>
+              </label>
+              <input type="range" id="photoCensorScale" min="0.5" max="2" step="0.1" value="1" class="w-full accent-indigo-500 cursor-pointer" disabled />
             </div>
           </div>
         </div>
@@ -182,6 +190,7 @@
                 <option value="pixelate">Pixelate (Mosaik)</option>
                 <option value="blur">Blur</option>
                 <option value="blackbox">Kotak Hitam</option>
+                <option value="sticker">Stiker 😷</option>
               </select>
             </div>
             <div>
@@ -192,6 +201,14 @@
                 <option value="416">Tinggi (Cocok PC)</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+              <span>Ukuran Sensor</span>
+              <span id="videoCensorScaleValue" class="text-indigo-300 font-mono">100%</span>
+            </label>
+            <input type="range" id="videoCensorScale" min="0.5" max="2" step="0.1" value="1" class="w-full accent-indigo-500 cursor-pointer" />
           </div>
         </div>
 
@@ -263,6 +280,8 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const WATERMARK_BRAND = 'vidzey.my.id';
+      const STICKER_EMOJI = '😷';
+      const STICKER_FONT = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "EmojiOne Color", sans-serif';
 
       const tabPhotoBtn = document.getElementById('tabPhotoBtn');
       const tabVideoBtn = document.getElementById('tabVideoBtn');
@@ -319,6 +338,32 @@
         targetCtx.restore();
       }
 
+      function drawSticker(targetCtx, x, y, width, height) {
+        const fontSize = Math.max(width, height) * 1.05;
+        targetCtx.save();
+        targetCtx.font = `${fontSize}px ${STICKER_FONT}`;
+        targetCtx.textAlign = 'center';
+        targetCtx.textBaseline = 'middle';
+        targetCtx.fillText(STICKER_EMOJI, x + width / 2, y + height / 2);
+        targetCtx.restore();
+      }
+
+      function applyScaleToBox(box, scale, maxW, maxH) {
+        const scaledW = box.width * scale;
+        const scaledH = box.height * scale;
+        let x = box.x + (box.width - scaledW) / 2;
+        let y = box.y + (box.height - scaledH) / 2;
+        let width = scaledW;
+        let height = scaledH;
+
+        if (x < 0) { width += x; x = 0; }
+        if (y < 0) { height += y; y = 0; }
+        if (x + width > maxW) width = maxW - x;
+        if (y + height > maxH) height = maxH - y;
+
+        return { x, y, width, height };
+      }
+
       const FACE_MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
       let isPhotoLoaded = false;
       let isVideoLoaded = false;
@@ -342,7 +387,7 @@
       }
       loadFaceDetector();
 
-      // ==================== MODE FOTO (tidak diubah) ====================
+      // ==================== MODE FOTO ====================
       const photoDropZone = document.getElementById('photoDropZone');
       const photoInput = document.getElementById('photoInput');
       const editorCanvas = document.getElementById('editorCanvas');
@@ -358,12 +403,15 @@
       const cartoonPresetSelect = document.getElementById('cartoonPresetSelect');
       const photoFilterButtons = document.querySelectorAll('.photo-filter-btn');
       const photoDownloadBtn = document.getElementById('photoDownloadBtn');
+      const photoCensorScaleInput = document.getElementById('photoCensorScale');
+      const photoCensorScaleValue = document.getElementById('photoCensorScaleValue');
 
       let originalImage = null;
       let photoDetectedFaces = [];
       let currentPhotoFilter = 'normal';
       let currentPhotoCensorType = 'pixelate';
       let currentCartoonPreset = 'cel';
+      let currentPhotoCensorScale = 1.0;
       const cartoonCache = {};
 
       photoDropZone.addEventListener('click', () => photoInput.click());
@@ -404,6 +452,7 @@
             photoCensorType.disabled = false;
             photoClearCensorBtn.disabled = false;
             photoDownloadBtn.disabled = false;
+            photoCensorScaleInput.disabled = false;
             photoFilterButtons.forEach(btn => btn.disabled = false);
 
             await renderPhotoCanvas();
@@ -586,7 +635,10 @@
 
       function applyPhotoFaceCensors() {
         photoDetectedFaces.forEach(face => {
-          const { x, y, width, height } = face;
+          const scaled = applyScaleToBox(face, currentPhotoCensorScale, editorCanvas.width, editorCanvas.height);
+          const { x, y, width, height } = scaled;
+
+          if (width < 1 || height < 1) return;
 
           if (currentPhotoCensorType === 'blackbox') {
             pCtx.save();
@@ -603,6 +655,8 @@
             pCtx.filter = `blur(${blurRadius}px)`;
             pCtx.drawImage(editorCanvas, x - blurRadius, y - blurRadius, width + blurRadius * 2, height + blurRadius * 2, x - blurRadius, y - blurRadius, width + blurRadius * 2, height + blurRadius * 2);
             pCtx.restore();
+          } else if (currentPhotoCensorType === 'sticker') {
+            drawSticker(pCtx, x, y, width, height);
           } else {
             const pixelBlockSize = Math.max(8, Math.floor(width / 10));
             const tempCanvas = document.createElement('canvas');
@@ -632,6 +686,12 @@
 
       photoCensorType.addEventListener('change', async (e) => {
         currentPhotoCensorType = e.target.value;
+        if (photoDetectedFaces.length > 0) await renderPhotoCanvas();
+      });
+
+      photoCensorScaleInput.addEventListener('input', async (e) => {
+        currentPhotoCensorScale = parseFloat(e.target.value);
+        photoCensorScaleValue.textContent = Math.round(currentPhotoCensorScale * 100) + '%';
         if (photoDetectedFaces.length > 0) await renderPhotoCanvas();
       });
 
@@ -694,6 +754,8 @@
       const videoCanvasWrapper = document.getElementById('videoCanvasWrapper');
       const videoStatusInfo = document.getElementById('videoStatusInfo');
       const videoFaceCounter = document.getElementById('videoFaceCounter');
+      const videoCensorScaleInput = document.getElementById('videoCensorScale');
+      const videoCensorScaleValue = document.getElementById('videoCensorScaleValue');
 
       const enableVideoCensor = document.getElementById('enableVideoCensor');
       const videoCensorMode = document.getElementById('videoCensorMode');
@@ -709,10 +771,10 @@
       let mediaRecorder = null;
       let recordedChunks = [];
       let videoAnimFrameId = null;
+      let currentVideoCensorScale = 1.0;
 
-      // === PERBAIKAN #1: Throttle deteksi (max ~12 fps) ===
       let lastDetectTime = 0;
-      const DETECT_MIN_INTERVAL = 80; // ms
+      const DETECT_MIN_INTERVAL = 80;
 
       videoDropZone.addEventListener('click', () => videoInput.click());
       videoDropZone.addEventListener('dragover', (e) => { e.preventDefault(); videoDropZone.classList.add('border-indigo-500', 'bg-slate-800'); });
@@ -767,7 +829,6 @@
         if (!isFaceModelLoaded || !enableVideoCensor.checked || isDetectingVideo) return;
         if (sourceVideo.readyState < 2) return;
 
-        // === PERBAIKAN #1: throttle ===
         const now = performance.now();
         if (now - lastDetectTime < DETECT_MIN_INTERVAL) return;
         lastDetectTime = now;
@@ -813,7 +874,6 @@
         const h = videoCanvas.height;
         if (!w || !h) return;
 
-        // === PERBAIKAN #3: guard sourceVideo invalid state ===
         if (sourceVideo.readyState < 2) return;
 
         try {
@@ -826,8 +886,9 @@
         if (enableVideoCensor.checked && lastVideoBoxes.length > 0) {
           const mode = videoCensorMode.value;
           lastVideoBoxes.forEach(face => {
-            const { x, y, width, height } = face;
-            // === PERBAIKAN #3: NaN/edge guard ===
+            const scaled = applyScaleToBox(face, currentVideoCensorScale, w, h);
+            const { x, y, width, height } = scaled;
+
             if (!Number.isFinite(x) || !Number.isFinite(y) ||
                 !Number.isFinite(width) || !Number.isFinite(height)) return;
             if (width < 2 || height < 2) return;
@@ -848,6 +909,8 @@
                 vCtx.drawImage(videoCanvas, x - blurPx, y - blurPx, width + blurPx * 2, height + blurPx * 2, x - blurPx, y - blurPx, width + blurPx * 2, height + blurPx * 2);
               } catch (e) { /* skip */ }
               vCtx.restore();
+            } else if (mode === 'sticker') {
+              drawSticker(vCtx, x, y, width, height);
             } else {
               const blockSize = Math.max(8, Math.floor(width / 9));
               const temp = document.createElement('canvas');
@@ -875,7 +938,6 @@
         }
       }
 
-      // === PERBAIKAN #2: try/catch + RAF dijamin jalan ===
       function videoProcessLoop() {
         if (sourceVideo.paused || sourceVideo.ended) {
           videoAnimFrameId = null;
@@ -895,7 +957,6 @@
         }
       }
 
-      // === PERBAIKAN #4: await play + cancel loop lama ===
       videoPreviewBtn.addEventListener('click', async () => {
         if (!isVideoLoaded || isRecording) return;
 
@@ -922,6 +983,14 @@
             try { drawVideoFrame(false); } catch (e) { console.warn(e); }
           }
         });
+      });
+
+      videoCensorScaleInput.addEventListener('input', (e) => {
+        currentVideoCensorScale = parseFloat(e.target.value);
+        videoCensorScaleValue.textContent = Math.round(currentVideoCensorScale * 100) + '%';
+        if (isVideoLoaded && sourceVideo.paused && !isRecording) {
+          try { drawVideoFrame(false); } catch (err) { console.warn(err); }
+        }
       });
 
       videoRenderBtn.addEventListener('click', async () => {
