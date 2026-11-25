@@ -16,6 +16,7 @@
       max-width: 100%;
       max-height: 65vh;
       object-fit: contain;
+      touch-action: none;
     }
   </style>
 </head>
@@ -97,6 +98,7 @@
                 <span id="photoCensorScaleValue" class="text-indigo-300 font-mono">100%</span>
               </label>
               <input type="range" id="photoCensorScale" min="0.5" max="2" step="0.1" value="1" class="w-full accent-indigo-500 cursor-pointer" disabled />
+              <p class="text-[10px] text-slate-500 leading-snug mt-1">💡 Geser kotak sensor langsung di foto untuk memindahkan posisi.</p>
             </div>
           </div>
         </div>
@@ -209,6 +211,7 @@
               <span id="videoCensorScaleValue" class="text-indigo-300 font-mono">100%</span>
             </label>
             <input type="range" id="videoCensorScale" min="0.5" max="2" step="0.1" value="1" class="w-full accent-indigo-500 cursor-pointer" />
+            <p class="text-[10px] text-slate-500 leading-snug mt-1">💡 Jeda video, lalu geser kotak sensor untuk memindahkan posisi.</p>
           </div>
         </div>
 
@@ -362,6 +365,22 @@
         if (y + height > maxH) height = maxH - y;
 
         return { x, y, width, height };
+      }
+
+      function getCanvasCoords(clientX, clientY, canvas) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: (clientX - rect.left) * (canvas.width / rect.width),
+          y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+      }
+
+      function findBoxAtPoint(boxes, x, y, scale, maxW, maxH) {
+        for (let i = boxes.length - 1; i >= 0; i--) {
+          const b = applyScaleToBox(boxes[i], scale, maxW, maxH);
+          if (x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height) return i;
+        }
+        return -1;
       }
 
       const FACE_MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
@@ -564,7 +583,7 @@
         return fullCanvas;
       }
 
-      async function renderPhotoCanvas() {
+      async function renderPhotoCanvas(skipOverlay = false) {
         if (!originalImage) return;
 
         const width = editorCanvas.width;
@@ -573,11 +592,15 @@
 
         let baseSource = originalImage;
         if (currentPhotoFilter === 'cartoon') {
-          photoProcessingText.textContent = 'Menerapkan efek kartun secara lokal...';
-          photoProcessingOverlay.classList.remove('hidden');
-          await new Promise(r => setTimeout(r, 15));
+          if (!skipOverlay) {
+            photoProcessingText.textContent = 'Menerapkan efek kartun secara lokal...';
+            photoProcessingOverlay.classList.remove('hidden');
+            await new Promise(r => setTimeout(r, 15));
+          }
           baseSource = generateCartoonImage(originalImage, currentCartoonPreset);
-          photoProcessingOverlay.classList.add('hidden');
+          if (!skipOverlay) {
+            photoProcessingOverlay.classList.add('hidden');
+          }
         }
 
         pCtx.save();
@@ -679,8 +702,10 @@
         if (photoDetectedFaces.length > 0) {
           photoFaceBadge.textContent = `${photoDetectedFaces.length} Wajah Disensor`;
           photoFaceBadge.classList.remove('hidden');
+          editorCanvas.style.touchAction = 'none';
         } else {
           photoFaceBadge.classList.add('hidden');
+          editorCanvas.style.touchAction = '';
         }
       }
 
@@ -742,6 +767,57 @@
         link.download = `vidzey-${currentPhotoFilter}-${timestamp}.png`;
         link.href = exportCanvas.toDataURL('image/png');
         link.click();
+      });
+
+      // === FITUR BARU: Drag kotak sensor di foto ===
+      let photoDrag = { active: false, index: -1, lastX: 0, lastY: 0 };
+
+      editorCanvas.addEventListener('pointerdown', (e) => {
+        if (!photoDetectedFaces.length) return;
+        const { x, y } = getCanvasCoords(e.clientX, e.clientY, editorCanvas);
+        const idx = findBoxAtPoint(photoDetectedFaces, x, y, currentPhotoCensorScale, editorCanvas.width, editorCanvas.height);
+        if (idx >= 0) {
+          photoDrag.active = true;
+          photoDrag.index = idx;
+          photoDrag.lastX = x;
+          photoDrag.lastY = y;
+          try { editorCanvas.setPointerCapture(e.pointerId); } catch(err) {}
+          editorCanvas.style.cursor = 'grabbing';
+          e.preventDefault();
+        }
+      });
+
+      editorCanvas.addEventListener('pointermove', (e) => {
+        if (!photoDetectedFaces.length) return;
+        const { x, y } = getCanvasCoords(e.clientX, e.clientY, editorCanvas);
+
+        if (photoDrag.active && photoDrag.index >= 0) {
+          const dx = x - photoDrag.lastX;
+          const dy = y - photoDrag.lastY;
+          const face = photoDetectedFaces[photoDrag.index];
+          face.x += dx;
+          face.y += dy;
+          photoDrag.lastX = x;
+          photoDrag.lastY = y;
+          renderPhotoCanvas(true);
+          return;
+        }
+
+        const idx = findBoxAtPoint(photoDetectedFaces, x, y, currentPhotoCensorScale, editorCanvas.width, editorCanvas.height);
+        editorCanvas.style.cursor = idx >= 0 ? 'grab' : 'default';
+      });
+
+      function endPhotoDrag(e) {
+        if (!photoDrag.active) return;
+        photoDrag.active = false;
+        photoDrag.index = -1;
+        editorCanvas.style.cursor = 'default';
+        try { editorCanvas.releasePointerCapture(e.pointerId); } catch(err) {}
+      }
+      editorCanvas.addEventListener('pointerup', endPhotoDrag);
+      editorCanvas.addEventListener('pointercancel', endPhotoDrag);
+      editorCanvas.addEventListener('pointerleave', (e) => {
+        if (!photoDrag.active) editorCanvas.style.cursor = 'default';
       });
 
       // ==================== MODE VIDEO ====================
@@ -991,6 +1067,62 @@
         if (isVideoLoaded && sourceVideo.paused && !isRecording) {
           try { drawVideoFrame(false); } catch (err) { console.warn(err); }
         }
+      });
+
+      // === FITUR BARU: Drag kotak sensor di video (saat dijeda) ===
+      let videoDrag = { active: false, index: -1, lastX: 0, lastY: 0 };
+
+      videoCanvas.addEventListener('pointerdown', (e) => {
+        if (!lastVideoBoxes.length || !sourceVideo.paused || isRecording) return;
+        const { x, y } = getCanvasCoords(e.clientX, e.clientY, videoCanvas);
+        const idx = findBoxAtPoint(lastVideoBoxes, x, y, currentVideoCensorScale, videoCanvas.width, videoCanvas.height);
+        if (idx >= 0) {
+          videoDrag.active = true;
+          videoDrag.index = idx;
+          videoDrag.lastX = x;
+          videoDrag.lastY = y;
+          try { videoCanvas.setPointerCapture(e.pointerId); } catch(err) {}
+          videoCanvas.style.cursor = 'grabbing';
+          e.preventDefault();
+        }
+      });
+
+      videoCanvas.addEventListener('pointermove', (e) => {
+        if (!lastVideoBoxes.length) return;
+        const { x, y } = getCanvasCoords(e.clientX, e.clientY, videoCanvas);
+
+        if (videoDrag.active && videoDrag.index >= 0) {
+          const dx = x - videoDrag.lastX;
+          const dy = y - videoDrag.lastY;
+          const face = lastVideoBoxes[videoDrag.index];
+          face.x += dx;
+          face.y += dy;
+          videoDrag.lastX = x;
+          videoDrag.lastY = y;
+          try { drawVideoFrame(false); } catch (err) { console.warn(err); }
+          return;
+        }
+
+        if (!sourceVideo.paused || isRecording) {
+          videoCanvas.style.cursor = 'default';
+          return;
+        }
+
+        const idx = findBoxAtPoint(lastVideoBoxes, x, y, currentVideoCensorScale, videoCanvas.width, videoCanvas.height);
+        videoCanvas.style.cursor = idx >= 0 ? 'grab' : 'default';
+      });
+
+      function endVideoDrag(e) {
+        if (!videoDrag.active) return;
+        videoDrag.active = false;
+        videoDrag.index = -1;
+        videoCanvas.style.cursor = 'default';
+        try { videoCanvas.releasePointerCapture(e.pointerId); } catch(err) {}
+      }
+      videoCanvas.addEventListener('pointerup', endVideoDrag);
+      videoCanvas.addEventListener('pointercancel', endVideoDrag);
+      videoCanvas.addEventListener('pointerleave', (e) => {
+        if (!videoDrag.active) videoCanvas.style.cursor = 'default';
       });
 
       videoRenderBtn.addEventListener('click', async () => {
