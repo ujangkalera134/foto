@@ -106,6 +106,22 @@
         <hr class="border-slate-700/80" />
 
         <div>
+          <label class="block text-sm font-semibold text-slate-200 mb-2">Hapus Background</label>
+          <button id="photoRemoveBgBtn" disabled class="w-full py-2.5 px-4 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-all flex items-center justify-center space-x-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span>Hapus Background Foto</span>
+          </button>
+          <button id="photoResetBgBtn" class="hidden w-full mt-2 py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-colors">
+            Kembalikan Foto Asli
+          </button>
+          <p class="text-[10px] text-slate-500 mt-1">💡 Background dihapus 100% lokal, hasil PNG transparan. Model ~40MB di-cache setelah load pertama.</p>
+        </div>
+
+        <hr class="border-slate-700/80" />
+
+        <div>
           <div class="flex items-center justify-between mb-3">
             <label class="text-sm font-semibold text-slate-200">3. Gaya & Filter</label>
             <select id="cartoonPresetSelect" class="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2 py-1 focus:outline-none focus:border-indigo-500">
@@ -213,6 +229,16 @@
             <input type="range" id="videoCensorScale" min="0.5" max="2" step="0.1" value="1" class="w-full accent-indigo-500 cursor-pointer" />
             <p class="text-[10px] text-slate-500 leading-snug mt-1">💡 Jeda video, lalu geser kotak sensor untuk memindahkan posisi.</p>
           </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <label class="text-[11px] text-slate-400">Hapus Background Video</label>
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="enableVideoBgRemoval" class="sr-only peer" />
+              <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all relative peer-checked:bg-indigo-600"></div>
+              <span class="ml-2 text-xs text-slate-300">Aktif</span>
+            </label>
+          </div>
+          <p class="text-[10px] text-slate-500 leading-snug">⚠ Proses ini berat. Background diganti hitam saat recording. FPS bisa turun di HP.</p>
         </div>
 
         <hr class="border-slate-700/80" />
@@ -424,8 +450,11 @@
       const photoDownloadBtn = document.getElementById('photoDownloadBtn');
       const photoCensorScaleInput = document.getElementById('photoCensorScale');
       const photoCensorScaleValue = document.getElementById('photoCensorScaleValue');
+      const photoRemoveBgBtn = document.getElementById('photoRemoveBgBtn');
+      const photoResetBgBtn = document.getElementById('photoResetBgBtn');
 
       let originalImage = null;
+      let originalImageBackup = null;
       let photoDetectedFaces = [];
       let currentPhotoFilter = 'normal';
       let currentPhotoCensorType = 'pixelate';
@@ -455,6 +484,8 @@
           const img = new Image();
           img.onload = async () => {
             originalImage = img;
+            originalImageBackup = null;
+            photoResetBgBtn.classList.add('hidden');
             isPhotoLoaded = true;
             photoDetectedFaces = [];
             Object.keys(cartoonCache).forEach(k => delete cartoonCache[k]);
@@ -472,6 +503,7 @@
             photoClearCensorBtn.disabled = false;
             photoDownloadBtn.disabled = false;
             photoCensorScaleInput.disabled = false;
+            photoRemoveBgBtn.disabled = false;
             photoFilterButtons.forEach(btn => btn.disabled = false);
 
             await renderPhotoCanvas();
@@ -769,6 +801,53 @@
         link.click();
       });
 
+      // === FITUR BARU: Hapus Background Foto ===
+      photoRemoveBgBtn.addEventListener('click', async () => {
+        if (!originalImage) return;
+        photoProcessingText.textContent = 'Menghapus background secara lokal...';
+        photoProcessingOverlay.classList.remove('hidden');
+        photoRemoveBgBtn.disabled = true;
+
+        try {
+          const { removeBackground } = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm');
+          const blob = await removeBackground(originalImage);
+          const url = URL.createObjectURL(blob);
+          const newImg = new Image();
+          await new Promise((resolve, reject) => {
+            newImg.onload = resolve;
+            newImg.onerror = reject;
+            newImg.src = url;
+          });
+
+          originalImageBackup = originalImage;
+          originalImage = newImg;
+          editorCanvas.width = newImg.width;
+          editorCanvas.height = newImg.height;
+          photoDetectedFaces = [];
+          updatePhotoFaceBadge();
+          await renderPhotoCanvas();
+          photoResetBgBtn.classList.remove('hidden');
+        } catch (err) {
+          console.error(err);
+          alert('Gagal menghapus background. Pastikan koneksi stabil untuk mengunduh model pertama kali.');
+        } finally {
+          photoProcessingOverlay.classList.add('hidden');
+          photoRemoveBgBtn.disabled = false;
+        }
+      });
+
+      photoResetBgBtn.addEventListener('click', async () => {
+        if (!originalImageBackup) return;
+        originalImage = originalImageBackup;
+        originalImageBackup = null;
+        editorCanvas.width = originalImage.width;
+        editorCanvas.height = originalImage.height;
+        photoDetectedFaces = [];
+        updatePhotoFaceBadge();
+        await renderPhotoCanvas();
+        photoResetBgBtn.classList.add('hidden');
+      });
+
       // === FITUR BARU: Drag kotak sensor di foto ===
       let photoDrag = { active: false, index: -1, lastX: 0, lastY: 0 };
 
@@ -832,6 +911,7 @@
       const videoFaceCounter = document.getElementById('videoFaceCounter');
       const videoCensorScaleInput = document.getElementById('videoCensorScale');
       const videoCensorScaleValue = document.getElementById('videoCensorScaleValue');
+      const enableVideoBgRemoval = document.getElementById('enableVideoBgRemoval');
 
       const enableVideoCensor = document.getElementById('enableVideoCensor');
       const videoCensorMode = document.getElementById('videoCensorMode');
@@ -851,6 +931,36 @@
 
       let lastDetectTime = 0;
       const DETECT_MIN_INTERVAL = 80;
+
+      // === VARIABEL BARU: Video Background Removal ===
+      let lastSegmentationMask = null;
+      let isSegmenting = false;
+      let lastSegmentTime = 0;
+      let segMaskCanvas = document.createElement('canvas');
+      let segMaskCtx = segMaskCanvas.getContext('2d');
+      let compositeCanvas = document.createElement('canvas');
+      let compositeCtx = compositeCanvas.getContext('2d');
+
+      async function initVideoBgRemoval() {
+        if (window.SelfieSegmentation) return;
+        try {
+          await import('https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js');
+          const selfieSegmentation = new SelfieSegmentation({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
+          });
+          selfieSegmentation.setOptions({ modelSelection: 1 });
+          selfieSegmentation.onResults((results) => {
+            if (!results.segmentationMask) return;
+            segMaskCanvas.width = results.segmentationMask.width;
+            segMaskCanvas.height = results.segmentationMask.height;
+            segMaskCtx.drawImage(results.segmentationMask, 0, 0);
+            lastSegmentationMask = segMaskCanvas;
+          });
+          window.__selfieSegmentation = selfieSegmentation;
+        } catch (err) {
+          console.warn('MediaPipe Selfie Segmentation gagal dimuat:', err);
+        }
+      }
 
       videoDropZone.addEventListener('click', () => videoInput.click());
       videoDropZone.addEventListener('dragover', (e) => { e.preventDefault(); videoDropZone.classList.add('border-indigo-500', 'bg-slate-800'); });
@@ -883,6 +993,7 @@
           isVideoLoaded = true;
           lastVideoBoxes = [];
           lastDetectTime = 0;
+          lastSegmentationMask = null;
           videoDownloadLink.classList.add('hidden');
 
           videoEmptyState.classList.add('hidden');
@@ -952,11 +1063,45 @@
 
         if (sourceVideo.readyState < 2) return;
 
-        try {
-          vCtx.drawImage(sourceVideo, 0, 0, w, h);
-        } catch (e) {
-          console.warn('drawImage(sourceVideo) failed:', e);
-          return;
+        // === BACKGROUND REMOVAL ===
+        if (enableVideoBgRemoval.checked) {
+          if (!window.__selfieSegmentation && !isSegmenting) {
+            initVideoBgRemoval();
+          }
+
+          if (window.__selfieSegmentation && lastSegmentationMask && !isSegmenting) {
+            const now = performance.now();
+            if (now - lastSegmentTime > 100) {
+              lastSegmentTime = now;
+              isSegmenting = true;
+              window.__selfieSegmentation.send({ image: sourceVideo })
+                .catch(() => {})
+                .finally(() => { isSegmenting = false; });
+            }
+          }
+
+          if (lastSegmentationMask) {
+            compositeCanvas.width = w;
+            compositeCanvas.height = h;
+            compositeCtx.clearRect(0, 0, w, h);
+            compositeCtx.drawImage(sourceVideo, 0, 0, w, h);
+            compositeCtx.globalCompositeOperation = 'destination-in';
+            compositeCtx.drawImage(lastSegmentationMask, 0, 0, w, h);
+            compositeCtx.globalCompositeOperation = 'source-over';
+
+            vCtx.fillStyle = '#000000';
+            vCtx.fillRect(0, 0, w, h);
+            vCtx.drawImage(compositeCanvas, 0, 0);
+          } else {
+            vCtx.drawImage(sourceVideo, 0, 0, w, h);
+          }
+        } else {
+          try {
+            vCtx.drawImage(sourceVideo, 0, 0, w, h);
+          } catch (e) {
+            console.warn('drawImage(sourceVideo) failed:', e);
+            return;
+          }
         }
 
         if (enableVideoCensor.checked && lastVideoBoxes.length > 0) {
@@ -1064,6 +1209,15 @@
       videoCensorScaleInput.addEventListener('input', (e) => {
         currentVideoCensorScale = parseFloat(e.target.value);
         videoCensorScaleValue.textContent = Math.round(currentVideoCensorScale * 100) + '%';
+        if (isVideoLoaded && sourceVideo.paused && !isRecording) {
+          try { drawVideoFrame(false); } catch (err) { console.warn(err); }
+        }
+      });
+
+      enableVideoBgRemoval.addEventListener('change', async () => {
+        if (enableVideoBgRemoval.checked) {
+          await initVideoBgRemoval();
+        }
         if (isVideoLoaded && sourceVideo.paused && !isRecording) {
           try { drawVideoFrame(false); } catch (err) { console.warn(err); }
         }
