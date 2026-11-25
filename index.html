@@ -778,12 +778,11 @@
           while (typeof faceapi === 'undefined') {
             await new Promise(r => setTimeout(r, 100));
           }
-          if (faceapi.tf && typeof faceapi.tf.setBackend === 'function') {
+          if (faceapi.tf && typeof faceapi.tf.ready === 'function') {
             try {
-              await faceapi.tf.setBackend('cpu');
               await faceapi.tf.ready();
             } catch (e) {
-              console.warn('Fallback backend:', e);
+              console.warn('Backend init warning:', e);
             }
           }
           await faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URL);
@@ -1427,7 +1426,7 @@
       let currentVideoSticker = '😷';
 
       let lastDetectTime = 0;
-      const DETECT_MIN_INTERVAL = 140;
+      const DETECT_MIN_INTERVAL = 220;
 
       const videoDetectCanvas = document.createElement('canvas');
       const videoDetectCtx = videoDetectCanvas.getContext('2d', { willReadFrequently: true });
@@ -1435,7 +1434,7 @@
       let lastSegmentationMask = null;
       let isSegmenting = false;
       let lastSegmentTime = 0;
-      const SEGMENT_MIN_INTERVAL = 150;
+      const SEGMENT_MIN_INTERVAL = 200;
       let videoSegInstance = null;
       let videoSegInitPromise = null;
       let segMaskCanvas = document.createElement('canvas');
@@ -1487,64 +1486,66 @@
         return videoSegInitPromise;
       }
 
-      async function runVideoSegmentationStep(force = false) {
-        if (!enableVideoBgRemoval.checked || isSegmenting) return;
-        if (!sourceVideo || sourceVideo.readyState < 2 || !sourceVideo.videoWidth || !sourceVideo.videoHeight) return;
+      function scheduleVideoSegmentationStep(force = false) {
+        if (!enableVideoBgRemoval.checked || isSegmenting) return Promise.resolve();
+        if (!sourceVideo || sourceVideo.readyState < 2 || !sourceVideo.videoWidth || !sourceVideo.videoHeight) return Promise.resolve();
 
         const now = performance.now();
-        if (!force && now - lastSegmentTime < SEGMENT_MIN_INTERVAL) return;
+        if (!force && now - lastSegmentTime < SEGMENT_MIN_INTERVAL) return Promise.resolve();
 
-        const seg = videoSegInstance || await initVideoBgRemoval();
-        if (!seg) return;
+        const seg = videoSegInstance;
+        if (!seg) {
+          initVideoBgRemoval();
+          return Promise.resolve();
+        }
 
         isSegmenting = true;
         lastSegmentTime = now;
-        try {
-          const maxSegDim = 320;
-          const scale = Math.min(1, maxSegDim / Math.max(sourceVideo.videoWidth, sourceVideo.videoHeight));
-          const sw = Math.max(1, Math.round(sourceVideo.videoWidth * scale));
-          const sh = Math.max(1, Math.round(sourceVideo.videoHeight * scale));
-          videoSegInputCanvas.width = sw;
-          videoSegInputCanvas.height = sh;
-          videoSegInputCtx.drawImage(sourceVideo, 0, 0, sw, sh);
 
-          await new Promise((resolve) => {
-            let settled = false;
-            const timer = setTimeout(() => {
-              if (!settled) {
-                settled = true;
-                resolve();
-              }
-            }, 600);
+        const maxSegDim = 256;
+        const scale = Math.min(1, maxSegDim / Math.max(sourceVideo.videoWidth, sourceVideo.videoHeight));
+        const sw = Math.max(1, Math.round(sourceVideo.videoWidth * scale));
+        const sh = Math.max(1, Math.round(sourceVideo.videoHeight * scale));
+        videoSegInputCanvas.width = sw;
+        videoSegInputCanvas.height = sh;
+        videoSegInputCtx.drawImage(sourceVideo, 0, 0, sw, sh);
 
-            seg.onResults((results) => {
-              if (results && results.segmentationMask) {
-                segMaskCanvas.width = results.segmentationMask.width || sw;
-                segMaskCanvas.height = results.segmentationMask.height || sh;
-                segMaskCtx.clearRect(0, 0, segMaskCanvas.width, segMaskCanvas.height);
-                segMaskCtx.drawImage(results.segmentationMask, 0, 0, segMaskCanvas.width, segMaskCanvas.height);
-                lastSegmentationMask = segMaskCanvas;
-              }
-              if (!settled) {
-                settled = true;
-                clearTimeout(timer);
-                resolve();
-              }
-            });
+        return new Promise((resolve) => {
+          let settled = false;
+          const finish = () => {
+            if (!settled) {
+              settled = true;
+              clearTimeout(timer);
+              isSegmenting = false;
+              resolve();
+            }
+          };
+          const timer = setTimeout(finish, 350);
 
-            seg.send({ image: videoSegInputCanvas }).catch(() => {
-              if (!settled) {
-                settled = true;
-                clearTimeout(timer);
-                resolve();
-              }
-            });
+          seg.onResults((results) => {
+            if (results && results.segmentationMask) {
+              segMaskCanvas.width = results.segmentationMask.width || sw;
+              segMaskCanvas.height = results.segmentationMask.height || sh;
+              segMaskCtx.clearRect(0, 0, segMaskCanvas.width, segMaskCanvas.height);
+              segMaskCtx.drawImage(results.segmentationMask, 0, 0, segMaskCanvas.width, segMaskCanvas.height);
+              lastSegmentationMask = segMaskCanvas;
+            }
+            finish();
           });
-        } catch (err) {
-          console.warn('Segmentasi frame video gagal:', err);
-        } finally {
-          isSegmenting = false;
-        }
+
+          try {
+            const p = seg.send({ image: videoSegInputCanvas });
+            if (p && typeof p.catch === 'function') {
+              p.catch((err) => {
+                console.warn('Segmentasi frame video gagal:', err);
+                finish();
+              });
+            }
+          } catch (err) {
+            console.warn('Segmentasi frame video error:', err);
+            finish();
+          }
+        });
       }
 
       videoDropZone.addEventListener('click', () => videoInput.click());
@@ -1600,65 +1601,70 @@
           if (isRecording) return;
           try {
             if (enableVideoBgRemoval.checked) {
-              await runVideoSegmentationStep(true);
+              await initVideoBgRemoval();
+              await scheduleVideoSegmentationStep(true);
             }
-            await detectFacesOnVideoFrame(true);
+            await scheduleVideoFaceDetection(true);
             drawVideoFrame(false);
           } catch (e) { console.warn('onseeked error:', e); }
         };
       }
 
-      async function detectFacesOnVideoFrame(force = false) {
-        if (!isFaceModelLoaded || !enableVideoCensor.checked || isDetectingVideo) return;
-        if (sourceVideo.readyState < 2 || !sourceVideo.videoWidth || !sourceVideo.videoHeight) return;
+      function scheduleVideoFaceDetection(force = false) {
+        if (!isFaceModelLoaded || !enableVideoCensor.checked || isDetectingVideo) return Promise.resolve();
+        if (sourceVideo.readyState < 2 || !sourceVideo.videoWidth || !sourceVideo.videoHeight) return Promise.resolve();
 
         const now = performance.now();
-        if (!force && now - lastDetectTime < DETECT_MIN_INTERVAL) return;
+        const interval = isRecording ? Math.max(DETECT_MIN_INTERVAL, 260) : DETECT_MIN_INTERVAL;
+        if (!force && now - lastDetectTime < interval) return Promise.resolve();
         lastDetectTime = now;
 
         isDetectingVideo = true;
-        try {
-          const maxDetectDim = 360;
-          const dScale = Math.min(1, maxDetectDim / Math.max(sourceVideo.videoWidth, sourceVideo.videoHeight));
-          const dw = Math.max(1, Math.round(sourceVideo.videoWidth * dScale));
-          const dh = Math.max(1, Math.round(sourceVideo.videoHeight * dScale));
-          videoDetectCanvas.width = dw;
-          videoDetectCanvas.height = dh;
-          videoDetectCtx.drawImage(sourceVideo, 0, 0, dw, dh);
+        const maxDetectDim = 256;
+        const dScale = Math.min(1, maxDetectDim / Math.max(sourceVideo.videoWidth, sourceVideo.videoHeight));
+        const dw = Math.max(1, Math.round(sourceVideo.videoWidth * dScale));
+        const dh = Math.max(1, Math.round(sourceVideo.videoHeight * dScale));
+        videoDetectCanvas.width = dw;
+        videoDetectCanvas.height = dh;
+        videoDetectCtx.drawImage(sourceVideo, 0, 0, dw, dh);
 
-          const inputSize = parseInt(videoDetectSpeed.value, 10) || 224;
-          const options = new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold: 0.42 });
-          const rawDetections = await faceapi.detectAllFaces(videoDetectCanvas, options);
-          const detections = filterValidDetections(rawDetections, dw, dh, 0.42, 10);
+        const rawSpeed = parseInt(videoDetectSpeed.value, 10) || 224;
+        const inputSize = isRecording ? Math.min(rawSpeed, 224) : rawSpeed;
+        const options = new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold: 0.42 });
 
-          const scaleX = videoCanvas.width / dw;
-          const scaleY = videoCanvas.height / dh;
-          if (!Number.isFinite(scaleX) || !Number.isFinite(scaleY) || scaleX <= 0 || scaleY <= 0) {
-            return;
-          }
+        return faceapi.detectAllFaces(videoDetectCanvas, options)
+          .then((rawDetections) => {
+            const detections = filterValidDetections(rawDetections, dw, dh, 0.42, 10);
+            const scaleX = videoCanvas.width / dw;
+            const scaleY = videoCanvas.height / dh;
+            if (!Number.isFinite(scaleX) || !Number.isFinite(scaleY) || scaleX <= 0 || scaleY <= 0) {
+              return;
+            }
 
-          lastVideoBoxes = detections.map(det => {
-            const b = det.box;
-            const padX = b.width * 0.12;
-            const padY = b.height * 0.14;
-            return {
-              x: Math.max(0, (b.x - padX) * scaleX),
-              y: Math.max(0, (b.y - padY) * scaleY),
-              width: Math.min(videoCanvas.width, (b.width + padX * 2) * scaleX),
-              height: Math.min(videoCanvas.height, (b.height + padY * 2) * scaleY)
-            };
-          }).filter(box =>
-            Number.isFinite(box.x) && Number.isFinite(box.y) &&
-            Number.isFinite(box.width) && Number.isFinite(box.height) &&
-            box.width > 2 && box.height > 2
-          );
+            lastVideoBoxes = detections.map(det => {
+              const b = det.box;
+              const padX = b.width * 0.12;
+              const padY = b.height * 0.14;
+              return {
+                x: Math.max(0, (b.x - padX) * scaleX),
+                y: Math.max(0, (b.y - padY) * scaleY),
+                width: Math.min(videoCanvas.width, (b.width + padX * 2) * scaleX),
+                height: Math.min(videoCanvas.height, (b.height + padY * 2) * scaleY)
+              };
+            }).filter(box =>
+              Number.isFinite(box.x) && Number.isFinite(box.y) &&
+              Number.isFinite(box.width) && Number.isFinite(box.height) &&
+              box.width > 2 && box.height > 2
+            );
 
-          videoFaceCounter.textContent = `${lastVideoBoxes.length} wajah terdeteksi`;
-        } catch (err) {
-          console.error('detect error:', err);
-        } finally {
-          isDetectingVideo = false;
-        }
+            videoFaceCounter.textContent = `${lastVideoBoxes.length} wajah terdeteksi`;
+          })
+          .catch((err) => {
+            console.error('detect error:', err);
+          })
+          .finally(() => {
+            isDetectingVideo = false;
+          });
       }
 
       function drawVideoFrame(includeWatermark) {
@@ -1669,10 +1675,6 @@
         if (sourceVideo.readyState < 2) return;
 
         if (enableVideoBgRemoval.checked) {
-          if (!isSegmenting) {
-            runVideoSegmentationStep(false);
-          }
-
           if (lastSegmentationMask && lastSegmentationMask.width > 0 && lastSegmentationMask.height > 0) {
             compositeCanvas.width = w;
             compositeCanvas.height = h;
@@ -1729,8 +1731,12 @@
         }
 
         try { drawVideoFrame(isRecording); } catch (e) { console.warn('draw loop error:', e); }
-        if (!isDetectingVideo) {
-          detectFacesOnVideoFrame(false);
+
+        if (enableVideoBgRemoval.checked && !isSegmenting) {
+          scheduleVideoSegmentationStep(false);
+        }
+        if (enableVideoCensor.checked && !isDetectingVideo) {
+          scheduleVideoFaceDetection(false);
         }
 
         videoAnimFrameId = requestAnimationFrame(videoProcessLoop);
@@ -1749,7 +1755,7 @@
         if (sourceVideo.paused || sourceVideo.ended) {
           try {
             if (enableVideoBgRemoval.checked) {
-              initVideoBgRemoval();
+              await initVideoBgRemoval();
             }
             if (sourceVideo.ended) {
               sourceVideo.currentTime = 0;
@@ -1816,7 +1822,7 @@
           setVideoProcessingState(true, 'Menyiapkan penghapus background...', 'Memuat model segmentasi video.', 10);
           await initVideoBgRemoval();
           if (isVideoLoaded && sourceVideo.readyState >= 2) {
-            await runVideoSegmentationStep(true);
+            await scheduleVideoSegmentationStep(true);
           }
           setVideoProcessingState(false);
         } else {
@@ -1941,9 +1947,9 @@
         }
 
         if (enableVideoBgRemoval.checked) {
-          await runVideoSegmentationStep(true);
+          await scheduleVideoSegmentationStep(true);
         }
-        await detectFacesOnVideoFrame(true);
+        await scheduleVideoFaceDetection(true);
         try { drawVideoFrame(true); } catch (e) { console.warn(e); }
 
         const canvasStream = videoCanvas.captureStream(30);
@@ -1958,6 +1964,24 @@
 
         recordedChunks = [];
         mediaRecorder = new MediaRecorder(canvasStream, supportedMime ? { mimeType: supportedMime } : undefined);
+
+        let recorderStopped = false;
+        const finishRecording = () => {
+          if (recorderStopped) return;
+          recorderStopped = true;
+          stopVideoLoop();
+          sourceVideo.onended = null;
+          sourceVideo.onerror = null;
+          try { drawVideoFrame(true); } catch (e) { console.warn(e); }
+          setTimeout(() => {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+              try {
+                mediaRecorder.requestData();
+              } catch (e) {}
+              mediaRecorder.stop();
+            }
+          }, 200);
+        };
 
         mediaRecorder.ondataavailable = (e) => {
           if (e.data && e.data.size > 0) recordedChunks.push(e.data);
@@ -1987,17 +2011,14 @@
         };
 
         sourceVideo.onended = () => {
-          stopVideoLoop();
-          try { drawVideoFrame(true); } catch (e) { console.warn(e); }
-          setTimeout(() => {
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-              mediaRecorder.stop();
-            }
-          }, 120);
-          sourceVideo.onended = null;
+          finishRecording();
         };
 
-        mediaRecorder.start(100);
+        sourceVideo.onerror = () => {
+          finishRecording();
+        };
+
+        mediaRecorder.start(250);
         try {
           await sourceVideo.play();
         } catch (e) {
