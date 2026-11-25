@@ -116,7 +116,7 @@
           <button id="photoResetBgBtn" class="hidden w-full mt-2 py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-colors">
             Kembalikan Foto Asli
           </button>
-          <p class="text-[10px] text-slate-500 mt-1">💡 Background dihapus 100% lokal, hasil PNG transparan. Model ~40MB di-cache setelah load pertama.</p>
+          <p class="text-[10px] text-slate-500 mt-1">💡 Background dihapus 100% lokal, hasil PNG transparan. Model ringan (MediaPipe).</p>
         </div>
 
         <hr class="border-slate-700/80" />
@@ -801,7 +801,7 @@
         link.click();
       });
 
-      // === FITUR HAPUS BACKGROUND FOTO ===
+      // === FITUR HAPUS BACKGROUND FOTO (PAKAI MEDIAPIPE, TANPA CDN MODEL BERAT) ===
       photoRemoveBgBtn.addEventListener('click', async () => {
         if (!originalImage) return;
         photoProcessingText.textContent = 'Menghapus background secara lokal...';
@@ -809,17 +809,48 @@
         photoRemoveBgBtn.disabled = true;
 
         try {
-          const { removeBackground } = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm');
-          // PERUBAHAN HANYA DI SINI: Tambah publicPath agar download model lewat jsDelivr
-          const blob = await removeBackground(originalImage, {
-              publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal-data@1.7.0/dist/'
+          // Jika MediaPipe belum di-load, load dulu
+          if (!window.SelfieSegmentation) {
+            await import('https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js');
+          }
+          
+          const selfieSegmentation = new SelfieSegmentation({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
           });
-          const url = URL.createObjectURL(blob);
+          
+          selfieSegmentation.setOptions({ modelSelection: 1 });
+
+          // Gunakan Promise untuk menangkap hasil segmentasi
+          const result = await new Promise((resolve, reject) => {
+            selfieSegmentation.onResults((results) => {
+              resolve(results);
+            });
+            selfieSegmentation.send({ image: originalImage }).catch(reject);
+          });
+
+          if (!result.segmentationMask) {
+            throw new Error('Gagal mendapatkan masker background.');
+          }
+
+          // Buat canvas baru untuk hasil akhir
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = originalImage.width;
+          tempCanvas.height = originalImage.height;
+          const tempCtx = tempCanvas.getContext('2d');
+
+          // Gambar gambar asli
+          tempCtx.drawImage(originalImage, 0, 0);
+          
+          // Potong menggunakan masker
+          tempCtx.globalCompositeOperation = 'destination-in';
+          tempCtx.drawImage(result.segmentationMask, 0, 0, tempCanvas.width, tempCanvas.height);
+
+          // Ubah canvas menjadi gambar
           const newImg = new Image();
           await new Promise((resolve, reject) => {
             newImg.onload = resolve;
             newImg.onerror = reject;
-            newImg.src = url;
+            newImg.src = tempCanvas.toDataURL('image/png');
           });
 
           originalImageBackup = originalImage;
