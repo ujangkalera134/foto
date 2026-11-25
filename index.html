@@ -92,6 +92,36 @@
                 Hapus Sensor
               </button>
             </div>
+            <div id="photoStickerWrapper" class="hidden">
+              <label class="block text-[11px] text-slate-400 mb-1">Pilih Stiker Wajah</label>
+              <select id="photoStickerSelect" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                <option value="😷">😷 Masker Medis</option>
+                <option value="😎">😎 Kacamata Hitam</option>
+                <option value="🕶️">🕶️ Kacamata Gelap</option>
+                <option value="🤡">🤡 Badut</option>
+                <option value="🥳">🥳 Pesta</option>
+                <option value="🥷">🥷 Ninja</option>
+                <option value="🤖">🤖 Robot</option>
+                <option value="👽">👽 Alien</option>
+                <option value="👻">👻 Hantu Lucu</option>
+                <option value="🙈">🙈 Monyet Tutup Mata</option>
+                <option value="🐵">🐵 Monyet</option>
+                <option value="🐶">🐶 Anjing</option>
+                <option value="🐱">🐱 Kucing</option>
+                <option value="🦊">🦊 Rubah</option>
+                <option value="🦁">🦁 Singa</option>
+                <option value="🐼">🐼 Panda</option>
+                <option value="🐸">🐸 Katak</option>
+                <option value="🦄">🦄 Unicorn</option>
+                <option value="🎃">🎃 Labu Halloween</option>
+                <option value="💀">💀 Tengkorak</option>
+                <option value="💩">💩 Poop</option>
+                <option value="⭐">⭐ Bintang</option>
+                <option value="🔥">🔥 Api</option>
+                <option value="❤️">❤️ Hati Merah</option>
+                <option value="🌸">🌸 Bunga Sakura</option>
+              </select>
+            </div>
             <div>
               <label class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
                 <span>Ukuran Sensor</span>
@@ -221,6 +251,37 @@
             </div>
           </div>
 
+          <div id="videoStickerWrapper" class="hidden">
+            <label class="block text-[11px] text-slate-400 mb-1">Pilih Stiker Wajah</label>
+            <select id="videoStickerSelect" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-2 focus:outline-none focus:border-indigo-500">
+              <option value="😷">😷 Masker Medis</option>
+              <option value="😎">😎 Kacamata Hitam</option>
+              <option value="🕶️">🕶️ Kacamata Gelap</option>
+              <option value="🤡">🤡 Badut</option>
+              <option value="🥳">🥳 Pesta</option>
+              <option value="🥷">🥷 Ninja</option>
+              <option value="🤖">🤖 Robot</option>
+              <option value="👽">👽 Alien</option>
+              <option value="👻">👻 Hantu Lucu</option>
+              <option value="🙈">🙈 Monyet Tutup Mata</option>
+              <option value="🐵">🐵 Monyet</option>
+              <option value="🐶">🐶 Anjing</option>
+              <option value="🐱">🐱 Kucing</option>
+              <option value="🦊">🦊 Rubah</option>
+              <option value="🦁">🦁 Singa</option>
+              <option value="🐼">🐼 Panda</option>
+              <option value="🐸">🐸 Katak</option>
+              <option value="🦄">🦄 Unicorn</option>
+              <option value="🎃">🎃 Labu Halloween</option>
+              <option value="💀">💀 Tengkorak</option>
+              <option value="💩">💩 Poop</option>
+              <option value="⭐">⭐ Bintang</option>
+              <option value="🔥">🔥 Api</option>
+              <option value="❤️">❤️ Hati Merah</option>
+              <option value="🌸">🌸 Bunga Sakura</option>
+            </select>
+          </div>
+
           <div>
             <label class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
               <span>Ukuran Sensor</span>
@@ -309,7 +370,6 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const WATERMARK_BRAND = 'vidzey.my.id';
-      const STICKER_EMOJI = '😷';
       const STICKER_FONT = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "EmojiOne Color", sans-serif';
 
       const tabPhotoBtn = document.getElementById('tabPhotoBtn');
@@ -367,14 +427,53 @@
         targetCtx.restore();
       }
 
-      function drawSticker(targetCtx, x, y, width, height) {
+      function drawSticker(targetCtx, x, y, width, height, emoji) {
         const fontSize = Math.max(width, height) * 1.05;
         targetCtx.save();
         targetCtx.font = `${fontSize}px ${STICKER_FONT}`;
         targetCtx.textAlign = 'center';
         targetCtx.textBaseline = 'middle';
-        targetCtx.fillText(STICKER_EMOJI, x + width / 2, y + height / 2);
+        targetCtx.fillText(emoji || '😷', x + width / 2, y + height / 2);
         targetCtx.restore();
+      }
+
+      // Filter & Non-Maximum Suppression agar tidak muncul ratusan deteksi palsu (277 wajah)
+      function filterValidDetections(detections, maxW, maxH) {
+        const valid = detections
+          .filter(det => {
+            const b = det.box;
+            if (!b || !Number.isFinite(b.x) || !Number.isFinite(b.y) || !Number.isFinite(b.width) || !Number.isFinite(b.height)) return false;
+            if (b.width < 18 || b.height < 18) return false;
+            if (b.width > maxW * 0.95 || b.height > maxH * 0.95) return false;
+            const ratio = b.width / b.height;
+            if (ratio < 0.35 || ratio > 2.5) return false;
+            return (det.score || 0) >= 0.52;
+          })
+          .sort((a, b) => (b.score || 0) - (a.score || 0));
+
+        const kept = [];
+        for (const item of valid) {
+          const a = item.box;
+          let overlaps = false;
+          for (const prev of kept) {
+            const b = prev.box;
+            const ix1 = Math.max(a.x, b.x);
+            const iy1 = Math.max(a.y, b.y);
+            const ix2 = Math.min(a.x + a.width, b.x + b.width);
+            const iy2 = Math.min(a.y + a.height, b.y + b.height);
+            const iw = Math.max(0, ix2 - ix1);
+            const ih = Math.max(0, iy2 - iy1);
+            const inter = iw * ih;
+            const union = a.width * a.height + b.width * b.height - inter;
+            if (union > 0 && inter / union > 0.35) {
+              overlaps = true;
+              break;
+            }
+          }
+          if (!overlaps) kept.push(item);
+          if (kept.length >= 25) break;
+        }
+        return kept;
       }
 
       function applyScaleToBox(box, scale, maxW, maxH) {
@@ -418,6 +517,15 @@
           while (typeof faceapi === 'undefined') {
             await new Promise(r => setTimeout(r, 100));
           }
+          // Paksa backend CPU/WASM agar tidak terkena bug precision float16 WebGL HP (277 wajah palsu)
+          if (faceapi.tf && typeof faceapi.tf.setBackend === 'function') {
+            try {
+              await faceapi.tf.setBackend('cpu');
+              await faceapi.tf.ready();
+            } catch (e) {
+              console.warn('Fallback backend:', e);
+            }
+          }
           await faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URL);
           isFaceModelLoaded = true;
           modelStatus.className = 'flex items-center space-x-2 text-xs font-medium px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
@@ -443,6 +551,8 @@
       const photoProcessingText = document.getElementById('photoProcessingText');
       const photoDetectBtn = document.getElementById('photoDetectBtn');
       const photoCensorType = document.getElementById('photoCensorType');
+      const photoStickerWrapper = document.getElementById('photoStickerWrapper');
+      const photoStickerSelect = document.getElementById('photoStickerSelect');
       const photoClearCensorBtn = document.getElementById('photoClearCensorBtn');
       const photoFaceBadge = document.getElementById('photoFaceBadge');
       const cartoonPresetSelect = document.getElementById('cartoonPresetSelect');
@@ -458,6 +568,7 @@
       let photoDetectedFaces = [];
       let currentPhotoFilter = 'normal';
       let currentPhotoCensorType = 'pixelate';
+      let currentPhotoSticker = '😷';
       let currentCartoonPreset = 'cel';
       let currentPhotoCensorScale = 1.0;
       const cartoonCache = {};
@@ -658,18 +769,32 @@
         photoDetectBtn.disabled = true;
 
         try {
-          const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.4 });
-          const detections = await faceapi.detectAllFaces(originalImage, options);
+          // Gunakan canvas ukuran terkontrol agar deteksi akurat dan tidak menghasilkan kotak palsu
+          const maxDetectDim = 720;
+          const dScale = Math.min(1, maxDetectDim / Math.max(originalImage.width, originalImage.height));
+          const detectCanvas = document.createElement('canvas');
+          detectCanvas.width = Math.max(1, Math.round(originalImage.width * dScale));
+          detectCanvas.height = Math.max(1, Math.round(originalImage.height * dScale));
+          detectCanvas.getContext('2d').drawImage(originalImage, 0, 0, detectCanvas.width, detectCanvas.height);
 
+          const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.55 });
+          const rawDetections = await faceapi.detectAllFaces(detectCanvas, options);
+          const detections = filterValidDetections(rawDetections, detectCanvas.width, detectCanvas.height);
+
+          const invScale = 1 / dScale;
           photoDetectedFaces = detections.map(det => {
             const box = det.box;
-            const padX = box.width * 0.1;
-            const padY = box.height * 0.12;
+            const bx = box.x * invScale;
+            const by = box.y * invScale;
+            const bw = box.width * invScale;
+            const bh = box.height * invScale;
+            const padX = bw * 0.1;
+            const padY = bh * 0.12;
             return {
-              x: Math.max(0, box.x - padX),
-              y: Math.max(0, box.y - padY),
-              width: Math.min(editorCanvas.width - box.x, box.width + padX * 2),
-              height: Math.min(editorCanvas.height - box.y, box.height + padY * 2)
+              x: Math.max(0, bx - padX),
+              y: Math.max(0, by - padY),
+              width: Math.min(editorCanvas.width - bx, bw + padX * 2),
+              height: Math.min(editorCanvas.height - by, bh + padY * 2)
             };
           });
 
@@ -711,7 +836,7 @@
             pCtx.drawImage(editorCanvas, x - blurRadius, y - blurRadius, width + blurRadius * 2, height + blurRadius * 2, x - blurRadius, y - blurRadius, width + blurRadius * 2, height + blurRadius * 2);
             pCtx.restore();
           } else if (currentPhotoCensorType === 'sticker') {
-            drawSticker(pCtx, x, y, width, height);
+            drawSticker(pCtx, x, y, width, height, currentPhotoSticker);
           } else {
             const pixelBlockSize = Math.max(8, Math.floor(width / 10));
             const tempCanvas = document.createElement('canvas');
@@ -743,7 +868,19 @@
 
       photoCensorType.addEventListener('change', async (e) => {
         currentPhotoCensorType = e.target.value;
+        if (currentPhotoCensorType === 'sticker') {
+          photoStickerWrapper.classList.remove('hidden');
+        } else {
+          photoStickerWrapper.classList.add('hidden');
+        }
         if (photoDetectedFaces.length > 0) await renderPhotoCanvas();
+      });
+
+      photoStickerSelect.addEventListener('change', async (e) => {
+        currentPhotoSticker = e.target.value;
+        if (photoDetectedFaces.length > 0 && currentPhotoCensorType === 'sticker') {
+          await renderPhotoCanvas();
+        }
       });
 
       photoCensorScaleInput.addEventListener('input', async (e) => {
@@ -809,7 +946,6 @@
         photoRemoveBgBtn.disabled = true;
 
         try {
-          // Jika MediaPipe belum di-load, load dulu
           if (!window.SelfieSegmentation) {
             await import('https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js');
           }
@@ -820,7 +956,6 @@
           
           selfieSegmentation.setOptions({ modelSelection: 1 });
 
-          // Gunakan Promise untuk menangkap hasil segmentasi
           const result = await new Promise((resolve, reject) => {
             selfieSegmentation.onResults((results) => {
               resolve(results);
@@ -832,20 +967,15 @@
             throw new Error('Gagal mendapatkan masker background.');
           }
 
-          // Buat canvas baru untuk hasil akhir
           const tempCanvas = document.createElement('canvas');
           tempCanvas.width = originalImage.width;
           tempCanvas.height = originalImage.height;
           const tempCtx = tempCanvas.getContext('2d');
 
-          // Gambar gambar asli
           tempCtx.drawImage(originalImage, 0, 0);
-          
-          // Potong menggunakan masker
           tempCtx.globalCompositeOperation = 'destination-in';
           tempCtx.drawImage(result.segmentationMask, 0, 0, tempCanvas.width, tempCanvas.height);
 
-          // Ubah canvas menjadi gambar
           const newImg = new Image();
           await new Promise((resolve, reject) => {
             newImg.onload = resolve;
@@ -949,6 +1079,8 @@
 
       const enableVideoCensor = document.getElementById('enableVideoCensor');
       const videoCensorMode = document.getElementById('videoCensorMode');
+      const videoStickerWrapper = document.getElementById('videoStickerWrapper');
+      const videoStickerSelect = document.getElementById('videoStickerSelect');
       const videoDetectSpeed = document.getElementById('videoDetectSpeed');
       const videoPreviewBtn = document.getElementById('videoPreviewBtn');
       const videoRenderBtn = document.getElementById('videoRenderBtn');
@@ -962,6 +1094,7 @@
       let recordedChunks = [];
       let videoAnimFrameId = null;
       let currentVideoCensorScale = 1.0;
+      let currentVideoSticker = '😷';
 
       let lastDetectTime = 0;
       const DETECT_MIN_INTERVAL = 80;
@@ -1057,8 +1190,9 @@
         isDetectingVideo = true;
         try {
           const inputSize = parseInt(videoDetectSpeed.value, 10);
-          const options = new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold: 0.4 });
-          const detections = await faceapi.detectAllFaces(sourceVideo, options);
+          const options = new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold: 0.55 });
+          const rawDetections = await faceapi.detectAllFaces(sourceVideo, options);
+          const detections = filterValidDetections(rawDetections, sourceVideo.videoWidth, sourceVideo.videoHeight);
 
           const scaleX = videoCanvas.width / sourceVideo.videoWidth;
           const scaleY = videoCanvas.height / sourceVideo.videoHeight;
@@ -1097,7 +1231,6 @@
 
         if (sourceVideo.readyState < 2) return;
 
-        // === BACKGROUND REMOVAL ===
         if (enableVideoBgRemoval.checked) {
           if (!window.__selfieSegmentation && !isSegmenting) {
             initVideoBgRemoval();
@@ -1165,7 +1298,7 @@
               } catch (e) { /* skip */ }
               vCtx.restore();
             } else if (mode === 'sticker') {
-              drawSticker(vCtx, x, y, width, height);
+              drawSticker(vCtx, x, y, width, height, currentVideoSticker);
             } else {
               const blockSize = Math.max(8, Math.floor(width / 9));
               const temp = document.createElement('canvas');
@@ -1229,6 +1362,24 @@
           sourceVideo.pause();
           stopVideoLoop();
           videoStatusInfo.textContent = 'Preview dijeda';
+        }
+      });
+
+      videoCensorMode.addEventListener('change', (e) => {
+        if (e.target.value === 'sticker') {
+          videoStickerWrapper.classList.remove('hidden');
+        } else {
+          videoStickerWrapper.classList.add('hidden');
+        }
+        if (isVideoLoaded && sourceVideo.paused && !isRecording) {
+          try { drawVideoFrame(false); } catch (err) { console.warn(err); }
+        }
+      });
+
+      videoStickerSelect.addEventListener('change', (e) => {
+        currentVideoSticker = e.target.value;
+        if (isVideoLoaded && sourceVideo.paused && !isRecording) {
+          try { drawVideoFrame(false); } catch (err) { console.warn(err); }
         }
       });
 
