@@ -801,7 +801,7 @@
         link.click();
       });
 
-      // === FITUR BARU: Hapus Background Foto ===
+      // === FITUR HAPUS BACKGROUND FOTO ===
       photoRemoveBgBtn.addEventListener('click', async () => {
         if (!originalImage) return;
         photoProcessingText.textContent = 'Menghapus background secara lokal...';
@@ -810,7 +810,10 @@
 
         try {
           const { removeBackground } = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm');
-          const blob = await removeBackground(originalImage);
+          // PERUBAHAN HANYA DI SINI: Tambah publicPath agar download model lewat jsDelivr
+          const blob = await removeBackground(originalImage, {
+              publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal-data@1.7.0/dist/'
+          });
           const url = URL.createObjectURL(blob);
           const newImg = new Image();
           await new Promise((resolve, reject) => {
@@ -848,7 +851,7 @@
         photoResetBgBtn.classList.add('hidden');
       });
 
-      // === FITUR BARU: Drag kotak sensor di foto ===
+      // === DRAG KOTAK SENSOR FOTO ===
       let photoDrag = { active: false, index: -1, lastX: 0, lastY: 0 };
 
       editorCanvas.addEventListener('pointerdown', (e) => {
@@ -932,7 +935,7 @@
       let lastDetectTime = 0;
       const DETECT_MIN_INTERVAL = 80;
 
-      // === VARIABEL BARU: Video Background Removal ===
+      // === VARIABEL VIDEO BACKGROUND REMOVAL ===
       let lastSegmentationMask = null;
       let isSegmenting = false;
       let lastSegmentTime = 0;
@@ -1223,7 +1226,7 @@
         }
       });
 
-      // === FITUR BARU: Drag kotak sensor di video (saat dijeda) ===
+      // === DRAG KOTAK SENSOR VIDEO ===
       let videoDrag = { active: false, index: -1, lastX: 0, lastY: 0 };
 
       videoCanvas.addEventListener('pointerdown', (e) => {
