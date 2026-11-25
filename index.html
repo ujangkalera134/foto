@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FaceGuard Studio — Foto & Video Censor + Watermark vidzey.my.id</title>
+  <title>FaceGuard Studio</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <style>
@@ -25,19 +25,19 @@
   <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center space-x-3">
-        <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+        <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
           </svg>
         </div>
         <div>
-          <h1 class="text-lg font-bold tracking-tight text-white">FaceGuard Studio</h1>
-          <p class="text-xs text-slate-400">Foto & Video Auto Censor + Watermark vidzey.my.id • 100% Client-Side</p>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">FaceGuard Studio</h1>
+          <p class="text-xs text-slate-400">Foto &amp; Video Auto Censor</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3">
         <div class="bg-slate-800 p-1 rounded-xl border border-slate-700 flex text-xs font-semibold">
           <button id="tabPhotoBtn" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white transition-all">Mode Foto</button>
           <button id="tabVideoBtn" class="px-3.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition-all">Mode Video</button>
@@ -51,19 +51,41 @@
     </div>
   </header>
 
-  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
+  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-grow">
 
-    <div id="photoSection" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      <div class="lg:col-span-4 space-y-6 bg-slate-800/60 border border-slate-700/80 p-6 rounded-2xl shadow-xl">
+    <div id="photoSection" class="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+      <div class="order-1 lg:order-2 w-full lg:col-span-8 bg-slate-800/40 border border-slate-700/80 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center min-h-[320px] sm:min-h-[450px] relative shadow-xl">
+        <div id="photoEmptyState" class="text-center py-12 sm:py-16 px-4">
+          <div class="w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center mx-auto mb-4 text-slate-500">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <h3 class="text-sm sm:text-base font-medium text-slate-300">Belum ada foto yang dimuat</h3>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm mx-auto">Unggah foto di panel kontrol untuk mulai mengedit.</p>
+        </div>
+
+        <div id="photoCanvasWrapper" class="hidden w-full flex items-center justify-center rounded-xl overflow-hidden canvas-bg p-2 border border-slate-700">
+          <canvas id="editorCanvas" class="rounded-lg shadow-2xl"></canvas>
+        </div>
+
+        <div id="photoProcessingOverlay" class="hidden absolute inset-0 bg-slate-900/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-20 px-4 text-center">
+          <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+          <p id="photoProcessingText" class="text-sm font-medium text-white">Memproses foto...</p>
+        </div>
+      </div>
+
+      <div class="order-2 lg:order-1 w-full lg:col-span-4 space-y-5 bg-slate-800/60 border border-slate-700/80 p-5 sm:p-6 rounded-2xl shadow-xl">
         <div>
           <label class="block text-sm font-semibold text-slate-200 mb-2">1. Pilih Foto</label>
-          <div id="photoDropZone" class="border-2 border-dashed border-slate-600 hover:border-indigo-500 transition-colors rounded-xl p-6 text-center cursor-pointer bg-slate-800/40 group">
+          <div id="photoDropZone" class="border-2 border-dashed border-slate-600 hover:border-indigo-500 transition-colors rounded-xl p-5 sm:p-6 text-center cursor-pointer bg-slate-800/40 group">
             <input type="file" id="photoInput" accept="image/*" class="hidden" />
-            <svg class="w-10 h-10 mx-auto text-slate-400 group-hover:text-indigo-400 transition-colors mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-9 h-9 sm:w-10 sm:h-10 mx-auto text-slate-400 group-hover:text-indigo-400 transition-colors mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <p class="text-sm text-slate-300 font-medium">Klik untuk unggah atau Drag & Drop Foto</p>
-            <p class="text-xs text-slate-500 mt-1">JPG, PNG, WEBP (Foto tidak diupload ke server)</p>
+            <p class="text-xs sm:text-sm text-slate-300 font-medium">Klik untuk unggah atau Drag &amp; Drop Foto</p>
+            <p class="text-xs text-slate-500 mt-1">JPG, PNG, WEBP</p>
           </div>
         </div>
 
@@ -71,15 +93,15 @@
 
         <div>
           <div class="flex items-center justify-between mb-2">
-            <label class="text-sm font-semibold text-slate-200">2. Deteksi & Sensor Wajah</label>
+            <label class="text-sm font-semibold text-slate-200">2. Deteksi &amp; Sensor Wajah</label>
             <span id="photoFaceBadge" class="hidden text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-md border border-indigo-500/30">0 Wajah</span>
           </div>
           <div class="space-y-3">
-            <button id="photoDetectBtn" disabled class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-medium rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center space-x-2">
+            <button id="photoDetectBtn" disabled class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center space-x-2">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
-              <span>Deteksi & Sensor Wajah</span>
+              <span>Deteksi &amp; Sensor Wajah</span>
             </button>
             <div class="grid grid-cols-2 gap-2">
               <select id="photoCensorType" disabled class="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 disabled:opacity-50">
@@ -130,6 +152,13 @@
               <input type="range" id="photoCensorScale" min="0.5" max="2" step="0.1" value="1" class="w-full accent-indigo-500 cursor-pointer" disabled />
               <p class="text-[10px] text-slate-500 leading-snug mt-1">💡 Geser kotak sensor langsung di foto untuk memindahkan posisi.</p>
             </div>
+            <div>
+              <label class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                <span>Invisibility (Kejelasan Sensor)</span>
+                <span id="photoCensorInvisibilityValue" class="text-indigo-300 font-mono">100%</span>
+              </label>
+              <input type="range" id="photoCensorInvisibility" min="0" max="1" step="0.05" value="1" class="w-full accent-indigo-500 cursor-pointer" disabled />
+            </div>
           </div>
         </div>
 
@@ -146,41 +175,43 @@
           <button id="photoResetBgBtn" class="hidden w-full mt-2 py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-colors">
             Kembalikan Foto Asli
           </button>
-          <p class="text-[10px] text-slate-500 mt-1">💡 Background dihapus 100% lokal, hasil PNG transparan. Model ringan (MediaPipe).</p>
+          <p class="text-[10px] text-slate-500 mt-1">💡 Hasil transparan dalam format PNG.</p>
         </div>
 
         <hr class="border-slate-700/80" />
 
-        <div>
-          <div class="flex items-center justify-between mb-3">
-            <label class="text-sm font-semibold text-slate-200">3. Gaya & Filter</label>
-            <select id="cartoonPresetSelect" class="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2 py-1 focus:outline-none focus:border-indigo-500">
+        <div class="space-y-2.5">
+          <label class="block text-sm font-semibold text-slate-200">3. Gaya &amp; Filter</label>
+          <select id="photoFilterSelect" disabled class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2.5 focus:outline-none focus:border-indigo-500 disabled:opacity-50">
+            <option value="normal" selected>Normal</option>
+            <option value="cartoon">Cartoon</option>
+            <option value="grayscale">Grayscale</option>
+            <option value="vintage">Vintage</option>
+            <option value="sepia">Sepia</option>
+            <option value="invert">Invert (Negatif)</option>
+            <option value="highcontrast">High Contrast</option>
+            <option value="warm">Warm Sunset</option>
+            <option value="cool">Cool Arctic</option>
+            <option value="dramaticbw">Dramatic B&amp;W</option>
+            <option value="vivid">Vivid Pop</option>
+            <option value="cyber">Cyber Neon</option>
+            <option value="matte">Matte Film</option>
+            <option value="golden">Golden Hour</option>
+            <option value="emerald">Emerald Mood</option>
+            <option value="rose">Rose Tint</option>
+            <option value="lomo">Lomo</option>
+            <option value="posterize">Posterize</option>
+            <option value="sharpen">Sharpen</option>
+            <option value="nightvision">Night Vision</option>
+          </select>
+
+          <div id="cartoonPresetWrapper" class="hidden">
+            <label class="block text-[11px] text-slate-400 mb-1">Preset Cartoon</label>
+            <select id="cartoonPresetSelect" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
               <option value="cel">Cel Shade (Halus)</option>
               <option value="comic">Comic Ink (Garis Tegas)</option>
               <option value="pastel">Pastel Sketch</option>
             </select>
-          </div>
-          <div class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1" id="photoFilterButtons">
-            <button data-filter="normal" disabled class="photo-filter-btn active ring-2 ring-indigo-500 bg-slate-700 text-white py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Normal</button>
-            <button data-filter="cartoon" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Cartoon</button>
-            <button data-filter="grayscale" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Grayscale</button>
-            <button data-filter="vintage" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Vintage</button>
-            <button data-filter="sepia" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Sepia</button>
-            <button data-filter="invert" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Invert (Negatif)</button>
-            <button data-filter="highcontrast" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">High Contrast</button>
-            <button data-filter="warm" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Warm Sunset</button>
-            <button data-filter="cool" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Cool Arctic</button>
-            <button data-filter="dramaticbw" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Dramatic B&W</button>
-            <button data-filter="vivid" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Vivid Pop</button>
-            <button data-filter="cyber" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Cyber Neon</button>
-            <button data-filter="matte" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Matte Film</button>
-            <button data-filter="golden" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Golden Hour</button>
-            <button data-filter="emerald" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Emerald Mood</button>
-            <button data-filter="rose" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Rose Tint</button>
-            <button data-filter="lomo" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Lomo</button>
-            <button data-filter="posterize" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Posterize</button>
-            <button data-filter="sharpen" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Sharpen</button>
-            <button data-filter="nightvision" disabled class="photo-filter-btn bg-slate-900/80 hover:bg-slate-700 text-slate-300 py-2 px-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed">Night Vision</button>
           </div>
         </div>
 
@@ -197,12 +228,12 @@
           </div>
           <div>
             <label class="block text-[11px] text-slate-400 mb-1">Tulisan Watermark (Isi Sendiri)</label>
-            <input type="text" class="watermark-text-input w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500" value="vidzey.my.id" placeholder="Ketik tulisan watermark..." />
+            <input type="text" class="watermark-text-input w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500" value="" placeholder="Ketik tulisan watermark..." />
           </div>
           <div>
             <label class="block text-[11px] text-slate-400 mb-1">Gaya Watermark</label>
             <select class="watermark-style-select w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
-              <option value="diagonal-grid" selected>Diagonal Pola (Seperti Sekarang)</option>
+              <option value="diagonal-grid" selected>Diagonal Pola</option>
               <option value="horizontal-grid">Lurus Pola (Grid Horizontal)</option>
               <option value="diagonal-center">Diagonal Tengah (1 Besar)</option>
               <option value="horizontal-center">Lurus Tengah (1 Besar)</option>
@@ -216,7 +247,7 @@
         </div>
 
         <div>
-          <button id="photoDownloadBtn" disabled class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center space-x-2">
+          <button id="photoDownloadBtn" disabled class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center space-x-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
@@ -224,42 +255,43 @@
           </button>
         </div>
       </div>
-
-      <div class="lg:col-span-8 bg-slate-800/40 border border-slate-700/80 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center min-h-[450px] relative shadow-xl">
-        <div id="photoEmptyState" class="text-center py-16 px-4">
-          <div class="w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center mx-auto mb-4 text-slate-500">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </div>
-          <h3 class="text-base font-medium text-slate-300">Belum ada foto yang dimuat</h3>
-          <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">Unggah foto di panel sebelah kiri. Semua proses berjalan 100% lokal di perangkat Anda.</p>
-        </div>
-
-        <div id="photoCanvasWrapper" class="hidden w-full flex items-center justify-center rounded-xl overflow-hidden canvas-bg p-2 border border-slate-700">
-          <canvas id="editorCanvas" class="rounded-lg shadow-2xl"></canvas>
-        </div>
-
-        <div id="photoProcessingOverlay" class="hidden absolute inset-0 bg-slate-900/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-20 px-4 text-center">
-          <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-          <p id="photoProcessingText" class="text-sm font-medium text-white">Memproses foto secara lokal...</p>
-          <p class="text-xs text-slate-400 mt-1">Foto tidak dikirim ke server mana pun.</p>
-        </div>
-      </div>
     </div>
 
-    <div id="videoSection" class="hidden grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      <div class="lg:col-span-4 space-y-5 bg-slate-800/60 border border-slate-700/80 p-6 rounded-2xl shadow-xl">
+    <div id="videoSection" class="hidden flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+      <div class="order-1 lg:order-2 w-full lg:col-span-8 bg-slate-800/40 border border-slate-700/80 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center min-h-[320px] sm:min-h-[450px] relative shadow-xl">
+        <video id="sourceVideo" playsinline crossorigin="anonymous" class="hidden"></video>
+
+        <div id="videoEmptyState" class="text-center py-12 sm:py-16 px-4">
+          <div class="w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center mx-auto mb-4 text-slate-500">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 class="text-sm sm:text-base font-medium text-slate-300">Belum ada video yang dimuat</h3>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm mx-auto">Unggah video di panel kontrol untuk memproses sensor dan watermark.</p>
+        </div>
+
+        <div id="videoCanvasWrapper" class="hidden w-full flex flex-col items-center justify-center">
+          <div class="w-full flex items-center justify-between mb-2 px-1 text-xs text-slate-400 gap-2">
+            <span id="videoStatusInfo" class="truncate">Siap diproses</span>
+            <span id="videoFaceCounter" class="text-indigo-300 font-medium shrink-0">0 wajah terdeteksi</span>
+          </div>
+          <div class="w-full flex items-center justify-center rounded-xl overflow-hidden bg-black p-2 border border-slate-700">
+            <canvas id="videoCanvas" class="rounded-lg"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="order-2 lg:order-1 w-full lg:col-span-4 space-y-5 bg-slate-800/60 border border-slate-700/80 p-5 sm:p-6 rounded-2xl shadow-xl">
         <div>
-          <label class="block text-sm font-semibold text-slate-200 mb-2">1. Pilih Video Lokal</label>
+          <label class="block text-sm font-semibold text-slate-200 mb-2">1. Pilih Video</label>
           <div id="videoDropZone" class="border-2 border-dashed border-slate-600 hover:border-indigo-500 transition-colors rounded-xl p-5 text-center cursor-pointer bg-slate-800/40 group">
             <input type="file" id="videoInput" accept="video/*" class="hidden" />
             <svg class="w-9 h-9 mx-auto text-slate-400 group-hover:text-indigo-400 transition-colors mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
             </svg>
-            <p class="text-sm text-slate-300 font-medium">Klik untuk unggah atau Drag & Drop Video</p>
-            <p class="text-xs text-slate-500 mt-1">MP4, WEBM, MOV (Disarankan durasi pendek)</p>
+            <p class="text-xs sm:text-sm text-slate-300 font-medium">Klik untuk unggah atau Drag &amp; Drop Video</p>
+            <p class="text-xs text-slate-500 mt-1">MP4, WEBM, MOV</p>
           </div>
         </div>
 
@@ -288,9 +320,9 @@
             <div>
               <label class="block text-[11px] text-slate-400 mb-1">Kecepatan Deteksi</label>
               <select id="videoDetectSpeed" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-2 focus:outline-none focus:border-indigo-500">
-                <option value="224">Cepat (Cocok HP)</option>
+                <option value="224">Cepat</option>
                 <option value="320" selected>Seimbang</option>
-                <option value="416">Tinggi (Cocok PC)</option>
+                <option value="416">Tinggi</option>
               </select>
             </div>
           </div>
@@ -335,6 +367,14 @@
             <p class="text-[10px] text-slate-500 leading-snug mt-1">💡 Jeda video, lalu geser kotak sensor untuk memindahkan posisi.</p>
           </div>
 
+          <div>
+            <label class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+              <span>Invisibility (Kejelasan Sensor)</span>
+              <span id="videoCensorInvisibilityValue" class="text-indigo-300 font-mono">100%</span>
+            </label>
+            <input type="range" id="videoCensorInvisibility" min="0" max="1" step="0.05" value="1" class="w-full accent-indigo-500 cursor-pointer" />
+          </div>
+
           <div class="flex items-center justify-between pt-1">
             <label class="text-[11px] text-slate-400">Hapus Background Video</label>
             <label class="inline-flex items-center cursor-pointer">
@@ -343,7 +383,7 @@
               <span class="ml-2 text-xs text-slate-300">Aktif</span>
             </label>
           </div>
-          <p class="text-[10px] text-slate-500 leading-snug">⚠ Proses ini berat. Background diganti hitam saat recording. FPS bisa turun di HP.</p>
+          <p class="text-[10px] text-slate-500 leading-snug">⚠ Background diganti hitam saat recording.</p>
         </div>
 
         <hr class="border-slate-700/80" />
@@ -359,12 +399,12 @@
           </div>
           <div>
             <label class="block text-[11px] text-slate-400 mb-1">Tulisan Watermark (Isi Sendiri)</label>
-            <input type="text" class="watermark-text-input w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500" value="vidzey.my.id" placeholder="Ketik tulisan watermark..." />
+            <input type="text" class="watermark-text-input w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500" value="" placeholder="Ketik tulisan watermark..." />
           </div>
           <div>
             <label class="block text-[11px] text-slate-400 mb-1">Gaya Watermark</label>
             <select class="watermark-style-select w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
-              <option value="diagonal-grid" selected>Diagonal Pola (Seperti Sekarang)</option>
+              <option value="diagonal-grid" selected>Diagonal Pola</option>
               <option value="horizontal-grid">Lurus Pola (Grid Horizontal)</option>
               <option value="diagonal-center">Diagonal Tengah (1 Besar)</option>
               <option value="horizontal-center">Lurus Tengah (1 Besar)</option>
@@ -382,12 +422,12 @@
             Play / Pause Preview
           </button>
 
-          <button id="videoRenderBtn" disabled class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center space-x-2">
+          <button id="videoRenderBtn" disabled class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center space-x-2">
             <span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span>
-            <span id="videoRenderBtnText">Proses & Rekam Video Hasil</span>
+            <span id="videoRenderBtnText">Proses &amp; Rekam Video Hasil</span>
           </button>
 
-          <a id="videoDownloadLink" class="hidden w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center space-x-2 text-center">
+          <a id="videoDownloadLink" class="hidden w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center space-x-2 text-center">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
@@ -395,42 +435,15 @@
           </a>
         </div>
       </div>
-
-      <div class="lg:col-span-8 bg-slate-800/40 border border-slate-700/80 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center min-h-[450px] relative shadow-xl">
-        <video id="sourceVideo" playsinline crossorigin="anonymous" class="hidden"></video>
-
-        <div id="videoEmptyState" class="text-center py-16 px-4">
-          <div class="w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center mx-auto mb-4 text-slate-500">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <h3 class="text-base font-medium text-slate-300">Belum ada video yang dimuat</h3>
-          <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">Unggah video dari HP/PC Anda. Sensor wajah dan watermark diproses di browser.</p>
-        </div>
-
-        <div id="videoCanvasWrapper" class="hidden w-full flex flex-col items-center justify-center">
-          <div class="w-full flex items-center justify-between mb-2 px-1 text-xs text-slate-400">
-            <span id="videoStatusInfo">Siap diproses</span>
-            <span id="videoFaceCounter" class="text-indigo-300 font-medium">0 wajah terdeteksi</span>
-          </div>
-          <div class="w-full flex items-center justify-center rounded-xl overflow-hidden bg-black p-2 border border-slate-700">
-            <canvas id="videoCanvas" class="rounded-lg"></canvas>
-          </div>
-        </div>
-      </div>
     </div>
 
   </main>
 
-  <footer class="border-t border-slate-800/80 py-5 px-4 text-center bg-slate-900/50 space-y-1">
-    <p class="text-xs text-slate-400 flex items-center justify-center gap-1.5">
-      <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-      </svg>
-      <span>100% Privasi Terjaga. Semua foto & video diproses di HP/PC Anda, tidak pernah di-upload ke server.</span>
-    </p>
-    <p class="text-xs text-slate-400">Web ini dibuat oleh <span class="text-indigo-300 font-semibold">Kevin</span>.</p>
+  <footer class="border-t border-slate-800/80 py-5 px-4 bg-slate-900/70">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
+      <div class="font-semibold text-slate-300">FaceGuard Studio</div>
+      <div>Media Editing &amp; Censor Suite</div>
+    </div>
   </footer>
 
   <script>
@@ -448,7 +461,7 @@
       const watermarkStyleSelects = document.querySelectorAll('.watermark-style-select');
 
       let watermarkEnabled = true;
-      let watermarkText = 'vidzey.my.id';
+      let watermarkText = '';
       let watermarkStyle = 'diagonal-grid';
 
       function syncWatermarkControls(sourceEl) {
@@ -484,17 +497,17 @@
           tabPhotoBtn.className = 'px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white transition-all';
           tabVideoBtn.className = 'px-3.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition-all';
           photoSection.classList.remove('hidden');
-          photoSection.classList.add('grid');
+          photoSection.classList.add('flex', 'lg:grid');
           videoSection.classList.add('hidden');
-          videoSection.classList.remove('grid');
+          videoSection.classList.remove('flex', 'lg:grid');
           if (sourceVideo && !sourceVideo.paused) sourceVideo.pause();
         } else {
           tabVideoBtn.className = 'px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white transition-all';
           tabPhotoBtn.className = 'px-3.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition-all';
           videoSection.classList.remove('hidden');
-          videoSection.classList.add('grid');
+          videoSection.classList.add('flex', 'lg:grid');
           photoSection.classList.add('hidden');
-          photoSection.classList.remove('grid');
+          photoSection.classList.remove('flex', 'lg:grid');
         }
       }
 
@@ -628,6 +641,44 @@
         targetCtx.restore();
       }
 
+      function renderCensorBox(targetCtx, sourceCanvas, x, y, width, height, mode, stickerEmoji, invisibility) {
+        const alpha = Math.max(0, Math.min(1, invisibility));
+        if (alpha <= 0 || width < 1 || height < 1) return;
+
+        const boxCanvas = document.createElement('canvas');
+        boxCanvas.width = Math.max(1, Math.ceil(width));
+        boxCanvas.height = Math.max(1, Math.ceil(height));
+        const bCtx = boxCanvas.getContext('2d');
+
+        if (mode === 'blackbox') {
+          bCtx.fillStyle = '#0f172a';
+          bCtx.fillRect(0, 0, boxCanvas.width, boxCanvas.height);
+        } else if (mode === 'blur') {
+          const blurRadius = Math.max(12, Math.floor(width / 8));
+          bCtx.filter = `blur(${blurRadius}px)`;
+          bCtx.drawImage(sourceCanvas, x, y, width, height, 0, 0, boxCanvas.width, boxCanvas.height);
+        } else if (mode === 'sticker') {
+          drawSticker(bCtx, 0, 0, boxCanvas.width, boxCanvas.height, stickerEmoji);
+        } else {
+          const pixelBlockSize = Math.max(8, Math.floor(width / 10));
+          const tempCanvas = document.createElement('canvas');
+          const tempCtx = tempCanvas.getContext('2d');
+          const smallW = Math.max(1, Math.floor(width / pixelBlockSize));
+          const smallH = Math.max(1, Math.floor(height / pixelBlockSize));
+          tempCanvas.width = smallW;
+          tempCanvas.height = smallH;
+          tempCtx.drawImage(sourceCanvas, x, y, width, height, 0, 0, smallW, smallH);
+
+          bCtx.imageSmoothingEnabled = false;
+          bCtx.drawImage(tempCanvas, 0, 0, smallW, smallH, 0, 0, boxCanvas.width, boxCanvas.height);
+        }
+
+        targetCtx.save();
+        targetCtx.globalAlpha = alpha;
+        targetCtx.drawImage(boxCanvas, x, y, width, height);
+        targetCtx.restore();
+      }
+
       function filterValidDetections(detections, maxW, maxH, minScore = 0.52, minSize = 18) {
         const valid = detections
           .filter(det => {
@@ -744,11 +795,14 @@
       const photoStickerSelect = document.getElementById('photoStickerSelect');
       const photoClearCensorBtn = document.getElementById('photoClearCensorBtn');
       const photoFaceBadge = document.getElementById('photoFaceBadge');
+      const photoFilterSelect = document.getElementById('photoFilterSelect');
+      const cartoonPresetWrapper = document.getElementById('cartoonPresetWrapper');
       const cartoonPresetSelect = document.getElementById('cartoonPresetSelect');
-      const photoFilterButtons = document.querySelectorAll('.photo-filter-btn');
       const photoDownloadBtn = document.getElementById('photoDownloadBtn');
       const photoCensorScaleInput = document.getElementById('photoCensorScale');
       const photoCensorScaleValue = document.getElementById('photoCensorScaleValue');
+      const photoCensorInvisibilityInput = document.getElementById('photoCensorInvisibility');
+      const photoCensorInvisibilityValue = document.getElementById('photoCensorInvisibilityValue');
       const photoRemoveBgBtn = document.getElementById('photoRemoveBgBtn');
       const photoResetBgBtn = document.getElementById('photoResetBgBtn');
 
@@ -760,6 +814,7 @@
       let currentPhotoSticker = '😷';
       let currentCartoonPreset = 'cel';
       let currentPhotoCensorScale = 1.0;
+      let currentPhotoCensorInvisibility = 1.0;
       const cartoonCache = {};
       const pixelFilterCache = {};
 
@@ -792,7 +847,8 @@
             Object.keys(cartoonCache).forEach(k => delete cartoonCache[k]);
             Object.keys(pixelFilterCache).forEach(k => delete pixelFilterCache[k]);
             currentPhotoFilter = 'normal';
-            updatePhotoFilterUI();
+            photoFilterSelect.value = 'normal';
+            cartoonPresetWrapper.classList.add('hidden');
             updatePhotoFaceBadge();
 
             editorCanvas.width = img.width;
@@ -805,8 +861,9 @@
             photoClearCensorBtn.disabled = false;
             photoDownloadBtn.disabled = false;
             photoCensorScaleInput.disabled = false;
+            photoCensorInvisibilityInput.disabled = false;
             photoRemoveBgBtn.disabled = false;
-            photoFilterButtons.forEach(btn => btn.disabled = false);
+            photoFilterSelect.disabled = false;
 
             await renderPhotoCanvas();
           };
@@ -1013,7 +1070,7 @@
         let baseSource = originalImage;
         if (currentPhotoFilter === 'cartoon') {
           if (!skipOverlay) {
-            photoProcessingText.textContent = 'Menerapkan efek kartun secara lokal...';
+            photoProcessingText.textContent = 'Menerapkan efek kartun...';
             photoProcessingOverlay.classList.remove('hidden');
             await new Promise(r => setTimeout(r, 15));
           }
@@ -1023,7 +1080,7 @@
           }
         } else if (currentPhotoFilter === 'posterize' || currentPhotoFilter === 'lomo' || currentPhotoFilter === 'nightvision') {
           if (!skipOverlay) {
-            photoProcessingText.textContent = 'Menerapkan efek foto secara lokal...';
+            photoProcessingText.textContent = 'Menerapkan efek foto...';
             photoProcessingOverlay.classList.remove('hidden');
             await new Promise(r => setTimeout(r, 15));
           }
@@ -1045,7 +1102,7 @@
 
       photoDetectBtn.addEventListener('click', async () => {
         if (!originalImage || !isFaceModelLoaded) return;
-        photoProcessingText.textContent = 'Mendeteksi wajah secara lokal...';
+        photoProcessingText.textContent = 'Mendeteksi wajah...';
         photoProcessingOverlay.classList.remove('hidden');
         photoDetectBtn.disabled = true;
 
@@ -1099,39 +1156,7 @@
           const { x, y, width, height } = scaled;
 
           if (width < 1 || height < 1) return;
-
-          if (currentPhotoCensorType === 'blackbox') {
-            pCtx.save();
-            pCtx.fillStyle = '#0f172a';
-            pCtx.fillRect(x, y, width, height);
-            pCtx.restore();
-          } else if (currentPhotoCensorType === 'blur') {
-            pCtx.save();
-            pCtx.beginPath();
-            pCtx.rect(x, y, width, height);
-            pCtx.clip();
-
-            const blurRadius = Math.max(12, Math.floor(width / 8));
-            pCtx.filter = `blur(${blurRadius}px)`;
-            pCtx.drawImage(editorCanvas, x - blurRadius, y - blurRadius, width + blurRadius * 2, height + blurRadius * 2, x - blurRadius, y - blurRadius, width + blurRadius * 2, height + blurRadius * 2);
-            pCtx.restore();
-          } else if (currentPhotoCensorType === 'sticker') {
-            drawSticker(pCtx, x, y, width, height, currentPhotoSticker);
-          } else {
-            const pixelBlockSize = Math.max(8, Math.floor(width / 10));
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
-            const smallW = Math.max(1, Math.floor(width / pixelBlockSize));
-            const smallH = Math.max(1, Math.floor(height / pixelBlockSize));
-            tempCanvas.width = smallW;
-            tempCanvas.height = smallH;
-            tempCtx.drawImage(editorCanvas, x, y, width, height, 0, 0, smallW, smallH);
-
-            pCtx.save();
-            pCtx.imageSmoothingEnabled = false;
-            pCtx.drawImage(tempCanvas, 0, 0, smallW, smallH, x, y, width, height);
-            pCtx.restore();
-          }
+          renderCensorBox(pCtx, editorCanvas, x, y, width, height, currentPhotoCensorType, currentPhotoSticker, currentPhotoCensorInvisibility);
         });
       }
 
@@ -1169,9 +1194,25 @@
         if (photoDetectedFaces.length > 0) await renderPhotoCanvas();
       });
 
+      photoCensorInvisibilityInput.addEventListener('input', async (e) => {
+        currentPhotoCensorInvisibility = parseFloat(e.target.value);
+        photoCensorInvisibilityValue.textContent = Math.round(currentPhotoCensorInvisibility * 100) + '%';
+        if (photoDetectedFaces.length > 0) await renderPhotoCanvas();
+      });
+
       photoClearCensorBtn.addEventListener('click', async () => {
         photoDetectedFaces = [];
         updatePhotoFaceBadge();
+        await renderPhotoCanvas();
+      });
+
+      photoFilterSelect.addEventListener('change', async (e) => {
+        currentPhotoFilter = e.target.value;
+        if (currentPhotoFilter === 'cartoon') {
+          cartoonPresetWrapper.classList.remove('hidden');
+        } else {
+          cartoonPresetWrapper.classList.add('hidden');
+        }
         await renderPhotoCanvas();
       });
 
@@ -1181,27 +1222,6 @@
           await renderPhotoCanvas();
         }
       });
-
-      photoFilterButtons.forEach(btn => {
-        btn.addEventListener('click', async () => {
-          currentPhotoFilter = btn.getAttribute('data-filter');
-          updatePhotoFilterUI();
-          await renderPhotoCanvas();
-        });
-      });
-
-      function updatePhotoFilterUI() {
-        photoFilterButtons.forEach(btn => {
-          const isMatch = btn.getAttribute('data-filter') === currentPhotoFilter;
-          if (isMatch) {
-            btn.classList.add('ring-2', 'ring-indigo-500', 'bg-slate-700', 'text-white');
-            btn.classList.remove('bg-slate-900/80', 'text-slate-300');
-          } else {
-            btn.classList.remove('ring-2', 'ring-indigo-500', 'bg-slate-700', 'text-white');
-            btn.classList.add('bg-slate-900/80', 'text-slate-300');
-          }
-        });
-      }
 
       photoDownloadBtn.addEventListener('click', () => {
         if (!originalImage) return;
@@ -1221,7 +1241,7 @@
 
       photoRemoveBgBtn.addEventListener('click', async () => {
         if (!originalImage) return;
-        photoProcessingText.textContent = 'Menghapus background secara lokal...';
+        photoProcessingText.textContent = 'Menghapus background...';
         photoProcessingOverlay.classList.remove('hidden');
         photoRemoveBgBtn.disabled = true;
 
@@ -1275,7 +1295,7 @@
           photoResetBgBtn.classList.remove('hidden');
         } catch (err) {
           console.error(err);
-          alert('Gagal menghapus background. Pastikan koneksi stabil untuk mengunduh model pertama kali.');
+          alert('Gagal menghapus background. Pastikan koneksi stabil untuk mengunduh model.');
         } finally {
           photoProcessingOverlay.classList.add('hidden');
           photoRemoveBgBtn.disabled = false;
@@ -1358,6 +1378,8 @@
       const videoFaceCounter = document.getElementById('videoFaceCounter');
       const videoCensorScaleInput = document.getElementById('videoCensorScale');
       const videoCensorScaleValue = document.getElementById('videoCensorScaleValue');
+      const videoCensorInvisibilityInput = document.getElementById('videoCensorInvisibility');
+      const videoCensorInvisibilityValue = document.getElementById('videoCensorInvisibilityValue');
       const enableVideoBgRemoval = document.getElementById('enableVideoBgRemoval');
 
       const enableVideoCensor = document.getElementById('enableVideoCensor');
@@ -1377,6 +1399,7 @@
       let recordedChunks = [];
       let videoAnimFrameId = null;
       let currentVideoCensorScale = 1.0;
+      let currentVideoCensorInvisibility = 1.0;
       let currentVideoSticker = '😷';
 
       let lastDetectTime = 0;
@@ -1641,43 +1664,7 @@
                 !Number.isFinite(width) || !Number.isFinite(height)) return;
             if (width < 2 || height < 2) return;
 
-            if (mode === 'blackbox') {
-              vCtx.save();
-              vCtx.fillStyle = '#0f172a';
-              vCtx.fillRect(x, y, width, height);
-              vCtx.restore();
-            } else if (mode === 'blur') {
-              vCtx.save();
-              vCtx.beginPath();
-              vCtx.rect(x, y, width, height);
-              vCtx.clip();
-              const blurPx = Math.max(10, Math.floor(width / 8));
-              vCtx.filter = `blur(${blurPx}px)`;
-              try {
-                vCtx.drawImage(videoCanvas, x - blurPx, y - blurPx, width + blurPx * 2, height + blurPx * 2, x - blurPx, y - blurPx, width + blurPx * 2, height + blurPx * 2);
-              } catch (e) { /* skip */ }
-              vCtx.restore();
-            } else if (mode === 'sticker') {
-              drawSticker(vCtx, x, y, width, height, currentVideoSticker);
-            } else {
-              const blockSize = Math.max(8, Math.floor(width / 9));
-              const temp = document.createElement('canvas');
-              const tCtx = temp.getContext('2d');
-              const sw = Math.max(1, Math.floor(width / blockSize));
-              const sh = Math.max(1, Math.floor(height / blockSize));
-              temp.width = sw;
-              temp.height = sh;
-              try {
-                tCtx.drawImage(videoCanvas, x, y, width, height, 0, 0, sw, sh);
-              } catch (e) { return; }
-
-              vCtx.save();
-              vCtx.imageSmoothingEnabled = false;
-              try {
-                vCtx.drawImage(temp, 0, 0, sw, sh, x, y, width, height);
-              } catch (e) { /* skip */ }
-              vCtx.restore();
-            }
+            renderCensorBox(vCtx, videoCanvas, x, y, width, height, mode, currentVideoSticker, currentVideoCensorInvisibility);
           });
         }
 
@@ -1757,6 +1744,14 @@
       videoCensorScaleInput.addEventListener('input', (e) => {
         currentVideoCensorScale = parseFloat(e.target.value);
         videoCensorScaleValue.textContent = Math.round(currentVideoCensorScale * 100) + '%';
+        if (isVideoLoaded && sourceVideo.paused && !isRecording) {
+          try { drawVideoFrame(false); } catch (err) { console.warn(err); }
+        }
+      });
+
+      videoCensorInvisibilityInput.addEventListener('input', (e) => {
+        currentVideoCensorInvisibility = parseFloat(e.target.value);
+        videoCensorInvisibilityValue.textContent = Math.round(currentVideoCensorInvisibility * 100) + '%';
         if (isVideoLoaded && sourceVideo.paused && !isRecording) {
           try { drawVideoFrame(false); } catch (err) { console.warn(err); }
         }
