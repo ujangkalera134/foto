@@ -66,8 +66,18 @@
           <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm mx-auto">Pilih foto di langkah 1 untuk langsung mengedit &amp; menyensor wajah.</p>
         </div>
 
-        <div id="photoCanvasWrapper" class="hidden w-full flex items-center justify-center rounded-xl overflow-hidden canvas-bg p-2 border border-slate-700">
-          <canvas id="editorCanvas" class="rounded-lg shadow-2xl"></canvas>
+        <div id="photoCanvasWrapper" class="hidden w-full flex flex-col items-center justify-center gap-4">
+          <div class="w-full flex items-center justify-center rounded-xl overflow-hidden canvas-bg p-2 border border-slate-700">
+            <canvas id="editorCanvas" class="rounded-lg shadow-2xl"></canvas>
+          </div>
+          <div class="w-full max-w-md">
+            <button id="photoDownloadBtn" disabled class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center space-x-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Download Hasil (PNG)</span>
+            </button>
+          </div>
         </div>
 
         <div id="photoProcessingOverlay" class="hidden absolute inset-0 bg-slate-900/85 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-20 px-4 text-center">
@@ -104,6 +114,12 @@
               </svg>
               <span>Deteksi &amp; Sensor Wajah</span>
             </button>
+            <button id="photoManualSensorBtn" disabled class="w-full py-2 px-3 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-200 text-xs font-medium rounded-xl border border-slate-600/80 transition-all">
+              Manual Sensor: Off (Klik untuk Aktifkan)
+            </button>
+            <p id="photoManualSensorHint" class="hidden text-[10px] text-indigo-300 leading-snug">
+              Mode manual aktif: klik pada area foto untuk menambah sensor, lalu geser untuk memindahkan.
+            </p>
             <div class="grid grid-cols-2 gap-2">
               <select id="photoCensorType" disabled class="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 disabled:opacity-50">
                 <option value="pixelate">Mode: Pixelate</option>
@@ -246,15 +262,6 @@
             </select>
           </div>
         </div>
-
-        <div>
-          <button id="photoDownloadBtn" disabled class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center space-x-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            <span>Download Hasil (PNG)</span>
-          </button>
-        </div>
       </div>
     </div>
 
@@ -269,23 +276,45 @@
             </svg>
           </div>
           <h3 class="text-sm sm:text-base font-medium text-slate-300">Belum ada video yang dimuat</h3>
-          <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm mx-auto">Pilih video di langkah 1, atur sensor/watermark, lalu klik tombol proses &amp; rekam.</p>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm mx-auto">Pilih video di langkah 1, atur sensor/watermark, lalu klik tombol proses.</p>
         </div>
 
-        <div id="videoCanvasWrapper" class="hidden w-full flex flex-col items-center justify-center">
-          <div class="w-full flex items-center justify-between mb-2 px-1 text-xs text-slate-400 gap-2">
+        <div id="videoCanvasWrapper" class="hidden w-full flex flex-col items-center justify-center gap-3">
+          <div class="w-full flex items-center justify-between mb-1 px-1 text-xs text-slate-400 gap-2">
             <span id="videoStatusInfo" class="truncate">Siap diproses</span>
             <span id="videoFaceCounter" class="text-indigo-300 font-medium shrink-0">0 wajah terdeteksi</span>
           </div>
           <div class="w-full flex items-center justify-center rounded-xl overflow-hidden bg-black p-2 border border-slate-700">
             <canvas id="videoCanvas" class="rounded-lg"></canvas>
           </div>
+
+          <div class="w-full bg-slate-900/70 border border-slate-700/80 rounded-xl p-3 space-y-1.5">
+            <div class="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+              <span id="videoCurrentTimeText">00:00</span>
+              <span>Timeline Video</span>
+              <span id="videoDurationText">00:00</span>
+            </div>
+            <input type="range" id="videoTimelineSlider" min="0" max="100" step="0.05" value="0" disabled class="w-full accent-indigo-500 cursor-pointer" />
+          </div>
+
+          <div class="w-full max-w-md space-y-2.5 pt-1">
+            <button id="videoPreviewBtn" disabled class="w-full py-2.5 px-4 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-all">
+              Play / Pause Preview
+            </button>
+
+            <a id="videoDownloadLink" class="hidden w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center space-x-2 text-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Download Video Hasil</span>
+            </a>
+          </div>
         </div>
 
         <div id="videoProcessingOverlay" class="hidden absolute inset-0 bg-slate-900/85 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-20 px-4 text-center">
           <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-          <p id="videoProcessingText" class="text-sm font-semibold text-white">Sedang memproses &amp; merekam video...</p>
-          <p id="videoProcessingSubtext" class="text-xs text-slate-300 mt-1">Mohon tunggu hingga video selesai diputar.</p>
+          <p id="videoProcessingText" class="text-sm font-semibold text-white">Sedang diproses...</p>
+          <p id="videoProcessingSubtext" class="text-xs text-slate-300 mt-1">Mohon tunggu hingga proses selesai.</p>
           <div class="w-56 max-w-full bg-slate-800 rounded-full h-2 mt-3 overflow-hidden border border-slate-700">
             <div id="videoProgressBar" class="bg-indigo-500 h-full transition-all duration-150" style="width: 0%"></div>
           </div>
@@ -383,7 +412,7 @@
               <span class="ml-2 text-xs text-slate-300">Aktif</span>
             </label>
           </div>
-          <p class="text-[10px] text-slate-500 leading-snug">⚠ Background diganti hitam saat recording.</p>
+          <p class="text-[10px] text-slate-500 leading-snug">⚠ Background diganti hitam saat pemrosesan.</p>
 
           <details class="bg-slate-900/50 border border-slate-700/70 rounded-lg px-3 py-2">
             <summary class="text-[11px] font-medium text-slate-300 cursor-pointer select-none">Pengaturan Lanjutan Deteksi</summary>
@@ -429,22 +458,11 @@
           </div>
         </div>
 
-        <div class="space-y-2.5">
-          <button id="videoPreviewBtn" disabled class="w-full py-2.5 px-4 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-all">
-            Play / Pause Preview
-          </button>
-
+        <div>
           <button id="videoRenderBtn" disabled class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center space-x-2">
             <span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span>
-            <span id="videoRenderBtnText">3. Proses &amp; Rekam Video Hasil</span>
+            <span id="videoRenderBtnText">3. Proses Video Hasil</span>
           </button>
-
-          <a id="videoDownloadLink" class="hidden w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center space-x-2 text-center">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            <span>Download Video Hasil</span>
-          </a>
         </div>
       </div>
     </div>
@@ -809,6 +827,8 @@
       const photoProcessingOverlay = document.getElementById('photoProcessingOverlay');
       const photoProcessingText = document.getElementById('photoProcessingText');
       const photoDetectBtn = document.getElementById('photoDetectBtn');
+      const photoManualSensorBtn = document.getElementById('photoManualSensorBtn');
+      const photoManualSensorHint = document.getElementById('photoManualSensorHint');
       const photoCensorType = document.getElementById('photoCensorType');
       const photoStickerWrapper = document.getElementById('photoStickerWrapper');
       const photoStickerSelect = document.getElementById('photoStickerSelect');
@@ -828,6 +848,7 @@
       let originalImage = null;
       let originalImageBackup = null;
       let photoDetectedFaces = [];
+      let isManualSensorMode = false;
       let currentPhotoFilter = 'normal';
       let currentPhotoCensorType = 'pixelate';
       let currentPhotoSticker = '😷';
@@ -836,6 +857,26 @@
       let currentPhotoCensorInvisibility = 1.0;
       const cartoonCache = {};
       const pixelFilterCache = {};
+
+      function setPhotoManualSensorMode(enabled) {
+        isManualSensorMode = !!enabled;
+        if (isManualSensorMode) {
+          photoManualSensorBtn.className = 'w-full py-2 px-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-xl border border-indigo-400/50 transition-all';
+          photoManualSensorBtn.textContent = 'Manual Sensor: Aktif (Klik Foto)';
+          photoManualSensorHint.classList.remove('hidden');
+          if (isPhotoLoaded) editorCanvas.style.cursor = 'crosshair';
+        } else {
+          photoManualSensorBtn.className = 'w-full py-2 px-3 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-200 text-xs font-medium rounded-xl border border-slate-600/80 transition-all';
+          photoManualSensorBtn.textContent = 'Manual Sensor: Off (Klik untuk Aktifkan)';
+          photoManualSensorHint.classList.add('hidden');
+          if (isPhotoLoaded) editorCanvas.style.cursor = 'default';
+        }
+      }
+
+      photoManualSensorBtn.addEventListener('click', () => {
+        if (!isPhotoLoaded) return;
+        setPhotoManualSensorMode(!isManualSensorMode);
+      });
 
       photoDropZone.addEventListener('click', () => photoInput.click());
       photoDropZone.addEventListener('dragover', (e) => { e.preventDefault(); photoDropZone.classList.add('border-indigo-500', 'bg-slate-800'); });
@@ -863,6 +904,7 @@
             photoResetBgBtn.classList.add('hidden');
             isPhotoLoaded = true;
             photoDetectedFaces = [];
+            setPhotoManualSensorMode(false);
             Object.keys(cartoonCache).forEach(k => delete cartoonCache[k]);
             Object.keys(pixelFilterCache).forEach(k => delete pixelFilterCache[k]);
             currentPhotoFilter = 'normal';
@@ -876,6 +918,7 @@
             photoEmptyState.classList.add('hidden');
             photoCanvasWrapper.classList.remove('hidden');
             if (isFaceModelLoaded) photoDetectBtn.disabled = false;
+            photoManualSensorBtn.disabled = false;
             photoCensorType.disabled = false;
             photoClearCensorBtn.disabled = false;
             photoDownloadBtn.disabled = false;
@@ -1338,7 +1381,7 @@
       let photoDrag = { active: false, index: -1, lastX: 0, lastY: 0 };
 
       editorCanvas.addEventListener('pointerdown', (e) => {
-        if (!photoDetectedFaces.length) return;
+        if (!originalImage) return;
         const { x, y } = getCanvasCoords(e.clientX, e.clientY, editorCanvas);
         const idx = findBoxAtPoint(photoDetectedFaces, x, y, currentPhotoCensorScale, editorCanvas.width, editorCanvas.height);
         if (idx >= 0) {
@@ -1349,11 +1392,32 @@
           try { editorCanvas.setPointerCapture(e.pointerId); } catch(err) {}
           editorCanvas.style.cursor = 'grabbing';
           e.preventDefault();
+          return;
+        }
+
+        if (isManualSensorMode) {
+          const baseSize = Math.max(48, Math.round(Math.min(editorCanvas.width, editorCanvas.height) * 0.16));
+          const boxW = Math.min(editorCanvas.width, baseSize);
+          const boxH = Math.min(editorCanvas.height, baseSize);
+          const bx = Math.max(0, Math.min(editorCanvas.width - boxW, x - boxW / 2));
+          const by = Math.max(0, Math.min(editorCanvas.height - boxH, y - boxH / 2));
+
+          photoDetectedFaces.push({ x: bx, y: by, width: boxW, height: boxH });
+          updatePhotoFaceBadge();
+          renderPhotoCanvas(true);
+
+          photoDrag.active = true;
+          photoDrag.index = photoDetectedFaces.length - 1;
+          photoDrag.lastX = x;
+          photoDrag.lastY = y;
+          try { editorCanvas.setPointerCapture(e.pointerId); } catch(err) {}
+          editorCanvas.style.cursor = 'grabbing';
+          e.preventDefault();
         }
       });
 
       editorCanvas.addEventListener('pointermove', (e) => {
-        if (!photoDetectedFaces.length) return;
+        if (!originalImage) return;
         const { x, y } = getCanvasCoords(e.clientX, e.clientY, editorCanvas);
 
         if (photoDrag.active && photoDrag.index >= 0) {
@@ -1369,20 +1433,26 @@
         }
 
         const idx = findBoxAtPoint(photoDetectedFaces, x, y, currentPhotoCensorScale, editorCanvas.width, editorCanvas.height);
-        editorCanvas.style.cursor = idx >= 0 ? 'grab' : 'default';
+        if (idx >= 0) {
+          editorCanvas.style.cursor = 'grab';
+        } else if (isManualSensorMode) {
+          editorCanvas.style.cursor = 'crosshair';
+        } else {
+          editorCanvas.style.cursor = 'default';
+        }
       });
 
       function endPhotoDrag(e) {
         if (!photoDrag.active) return;
         photoDrag.active = false;
         photoDrag.index = -1;
-        editorCanvas.style.cursor = 'default';
+        editorCanvas.style.cursor = isManualSensorMode ? 'crosshair' : 'default';
         try { editorCanvas.releasePointerCapture(e.pointerId); } catch(err) {}
       }
       editorCanvas.addEventListener('pointerup', endPhotoDrag);
       editorCanvas.addEventListener('pointercancel', endPhotoDrag);
       editorCanvas.addEventListener('pointerleave', (e) => {
-        if (!photoDrag.active) editorCanvas.style.cursor = 'default';
+        if (!photoDrag.active) editorCanvas.style.cursor = isManualSensorMode ? 'crosshair' : 'default';
       });
 
       // ==================== MODE VIDEO ====================
@@ -1395,6 +1465,9 @@
       const videoCanvasWrapper = document.getElementById('videoCanvasWrapper');
       const videoStatusInfo = document.getElementById('videoStatusInfo');
       const videoFaceCounter = document.getElementById('videoFaceCounter');
+      const videoTimelineSlider = document.getElementById('videoTimelineSlider');
+      const videoCurrentTimeText = document.getElementById('videoCurrentTimeText');
+      const videoDurationText = document.getElementById('videoDurationText');
       const videoProcessingOverlay = document.getElementById('videoProcessingOverlay');
       const videoProcessingText = document.getElementById('videoProcessingText');
       const videoProcessingSubtext = document.getElementById('videoProcessingSubtext');
@@ -1424,6 +1497,26 @@
       let currentVideoCensorScale = 1.0;
       let currentVideoCensorInvisibility = 1.0;
       let currentVideoSticker = '😷';
+      let isScrubbingTimeline = false;
+
+      function formatMediaTime(sec) {
+        if (!Number.isFinite(sec) || sec < 0) return '00:00';
+        const total = Math.floor(sec);
+        const mins = Math.floor(total / 60);
+        const secs = total % 60;
+        return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      }
+
+      function updateVideoTimelineUI() {
+        const dur = Number.isFinite(sourceVideo.duration) && sourceVideo.duration > 0 ? sourceVideo.duration : 0;
+        const cur = Number.isFinite(sourceVideo.currentTime) && sourceVideo.currentTime >= 0 ? sourceVideo.currentTime : 0;
+        videoTimelineSlider.max = dur > 0 ? dur : 100;
+        if (!isScrubbingTimeline) {
+          videoTimelineSlider.value = cur;
+        }
+        videoCurrentTimeText.textContent = formatMediaTime(cur);
+        videoDurationText.textContent = formatMediaTime(dur);
+      }
 
       let lastDetectTime = 0;
       const DETECT_MIN_INTERVAL = 220;
@@ -1587,8 +1680,10 @@
           videoEmptyState.classList.add('hidden');
           videoCanvasWrapper.classList.remove('hidden');
           videoPreviewBtn.disabled = false;
+          videoTimelineSlider.disabled = false;
           if (isFaceModelLoaded) videoRenderBtn.disabled = false;
           videoStatusInfo.textContent = 'Video siap diproses';
+          updateVideoTimelineUI();
 
           if (enableVideoBgRemoval.checked) {
             initVideoBgRemoval();
@@ -1598,6 +1693,7 @@
         };
 
         sourceVideo.onseeked = async () => {
+          updateVideoTimelineUI();
           if (isRecording) return;
           try {
             if (enableVideoBgRemoval.checked) {
@@ -1609,6 +1705,34 @@
           } catch (e) { console.warn('onseeked error:', e); }
         };
       }
+
+      videoTimelineSlider.addEventListener('pointerdown', () => {
+        if (!isVideoLoaded || isRecording) return;
+        isScrubbingTimeline = true;
+        if (!sourceVideo.paused) {
+          sourceVideo.pause();
+          stopVideoLoop();
+          videoStatusInfo.textContent = 'Preview dijeda';
+        }
+      });
+
+      videoTimelineSlider.addEventListener('input', (e) => {
+        if (!isVideoLoaded || isRecording) return;
+        const targetTime = parseFloat(e.target.value);
+        if (Number.isFinite(targetTime)) {
+          videoCurrentTimeText.textContent = formatMediaTime(targetTime);
+          sourceVideo.currentTime = targetTime;
+        }
+      });
+
+      function finishTimelineScrub() {
+        if (!isScrubbingTimeline) return;
+        isScrubbingTimeline = false;
+        updateVideoTimelineUI();
+      }
+      videoTimelineSlider.addEventListener('pointerup', finishTimelineScrub);
+      videoTimelineSlider.addEventListener('pointercancel', finishTimelineScrub);
+      videoTimelineSlider.addEventListener('change', finishTimelineScrub);
 
       function scheduleVideoFaceDetection(force = false) {
         if (!isFaceModelLoaded || !enableVideoCensor.checked || isDetectingVideo) return Promise.resolve();
@@ -1674,6 +1798,8 @@
 
         if (sourceVideo.readyState < 2) return;
 
+        updateVideoTimelineUI();
+
         if (enableVideoBgRemoval.checked) {
           if (lastSegmentationMask && lastSegmentationMask.width > 0 && lastSegmentationMask.height > 0) {
             compositeCanvas.width = w;
@@ -1720,13 +1846,14 @@
         if (isRecording && Number.isFinite(sourceVideo.duration) && sourceVideo.duration > 0) {
           const pct = Math.min(100, Math.round((sourceVideo.currentTime / sourceVideo.duration) * 100));
           videoProgressBar.style.width = `${pct}%`;
-          videoProcessingSubtext.textContent = `Sedang memproses video: ${pct}% (${sourceVideo.currentTime.toFixed(1)}s / ${sourceVideo.duration.toFixed(1)}s)`;
+          videoProcessingSubtext.textContent = `Sedang diproses: ${pct}% (${sourceVideo.currentTime.toFixed(1)}s / ${sourceVideo.duration.toFixed(1)}s)`;
         }
       }
 
       function videoProcessLoop() {
         if (sourceVideo.paused || sourceVideo.ended) {
           videoAnimFrameId = null;
+          updateVideoTimelineUI();
           return;
         }
 
@@ -1771,6 +1898,7 @@
         } else {
           sourceVideo.pause();
           stopVideoLoop();
+          updateVideoTimelineUI();
           videoStatusInfo.textContent = 'Preview dijeda';
         }
       });
@@ -1819,7 +1947,7 @@
 
       enableVideoBgRemoval.addEventListener('change', async () => {
         if (enableVideoBgRemoval.checked) {
-          setVideoProcessingState(true, 'Menyiapkan penghapus background...', 'Memuat model segmentasi video.', 10);
+          setVideoProcessingState(true, 'Sedang diproses...', 'Menyiapkan penghapus background video.', 10);
           await initVideoBgRemoval();
           if (isVideoLoaded && sourceVideo.readyState >= 2) {
             await scheduleVideoSegmentationStep(true);
@@ -1910,7 +2038,7 @@
             'Browser ini TIDAK mendukung perekaman MP4.\n' +
             'Hasil video akan berformat WebM — tidak bisa dibuka di galeri HP / WhatsApp.\n\n' +
             'Solusi: pakai Chrome/Edge versi terbaru, atau Safari 16.4+.\n\n' +
-            'Tetap lanjut merekam sebagai WebM?'
+            'Tetap lanjut memproses sebagai WebM?'
           );
           if (!proceed) return;
         }
@@ -1918,12 +2046,13 @@
         isRecording = true;
         videoRenderBtn.disabled = true;
         videoPreviewBtn.disabled = true;
+        videoTimelineSlider.disabled = true;
         videoDownloadLink.classList.add('hidden');
-        videoRenderBtnText.textContent = watermarkEnabled ? 'Sedang Merekam Video + Watermark...' : 'Sedang Merekam Video...';
-        videoStatusInfo.textContent = 'Sedang memproses & merekam video...';
+        videoRenderBtnText.textContent = watermarkEnabled ? 'Sedang diproses + Watermark...' : 'Sedang diproses...';
+        videoStatusInfo.textContent = 'Sedang diproses...';
         setVideoProcessingState(
           true,
-          'Sedang memproses & merekam video...',
+          'Sedang diproses...',
           'Menyiapkan frame awal video...',
           2
         );
@@ -2002,7 +2131,8 @@
           isRecording = false;
           videoRenderBtn.disabled = false;
           videoPreviewBtn.disabled = false;
-          videoRenderBtnText.textContent = '3. Proses & Rekam Video Hasil';
+          videoTimelineSlider.disabled = false;
+          videoRenderBtnText.textContent = '3. Proses Video Hasil';
           setVideoProcessingState(false);
           videoStatusInfo.textContent = willBeMp4
             ? 'Selesai! Video MP4 siap diunduh.'
@@ -2022,11 +2152,12 @@
         try {
           await sourceVideo.play();
         } catch (e) {
-          console.warn('Play for recording failed:', e);
+          console.warn('Play for processing failed:', e);
           setVideoProcessingState(false);
           isRecording = false;
           videoRenderBtn.disabled = false;
           videoPreviewBtn.disabled = false;
+          videoTimelineSlider.disabled = false;
           return;
         }
         videoProcessLoop();
